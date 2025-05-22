@@ -62,11 +62,12 @@
 *(Based on the PRD - IntelliSe.md)*
 
 ### Intelligent Ticket Management System (Enhancements)
-- **[P] AI-Driven Ticket Creation & Enrichment:** (Email POC Complete)
+- **[P] AI-Driven Ticket Creation & Enrichment:** (Email & Chat POCs Complete)
     - **[X] Auto-create tickets from email (POC via `/ingest/email` endpoint with spaCy for basic NLP).**
-    - [ ] Auto-create tickets from chat (actual integration).
-    - [ ] Advanced NLP to parse and auto-populate fields (beyond POC keywords/entities).
+    - **[X] Auto-create tickets from chat (POC via `/ingest/chat` endpoint, SupportAgent initiated, with spaCy for basic NLP).**
+    - [ ] Advanced NLP to parse and auto-populate fields (beyond POC keywords/entities for both email and chat).
     - [ ] Link new tickets with past tickets/customer history.
+    - [ ] Actual chat system integration (beyond POC endpoint).
 - **[ ] AI-Powered Ticket Categorization & Prioritization:**
     - ML for auto-classification (topic, urgency, sentiment, business impact).
     - Dynamic prioritization based on rules and AI factors.

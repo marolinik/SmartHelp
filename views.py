@@ -352,3 +352,77 @@ def ingest_email():
         return jsonify({"error": "Failed to create ticket", "details": str(e)}), 500
 
     return jsonify({"message": "Ticket created successfully", "ticket_id": new_ticket.id}), 201
+
+@ingestion_bp.route('/ingest/chat', methods=['POST'])
+@login_required # Ensure only authenticated users can access
+def ingest_chat():
+    # Authentication: Accessible only by authenticated "SupportAgent" users.
+    if current_user.role != 'SupportAgent':
+        return jsonify({"error": "Unauthorized. Only Support Agents can ingest chats."}), 403
+
+    data = request.get_json()
+    if not data:
+        return jsonify({"error": "Invalid JSON payload"}), 400
+
+    end_user_id = data.get('user_id')
+    chat_session_id = data.get('chat_session_id')
+    message_list = data.get('message_list')
+
+    if not all([end_user_id, chat_session_id, isinstance(message_list, list)]):
+        return jsonify({"error": "Missing user_id, chat_session_id, or message_list (must be a list)"}), 400
+
+    # User Validation
+    target_user = User.query.get(end_user_id)
+    if not target_user or target_user.role != 'EndUser':
+        return jsonify({"error": f"User with ID {end_user_id} not found or is not an EndUser."}), 404
+
+    # NLP Processing
+    user_messages_text = " ".join([msg.get("text", "") for msg in message_list if msg.get("sender") == "user" and msg.get("text")])
+    
+    if not user_messages_text.strip():
+        return jsonify({"error": "No user messages found in the chat to process."}), 400
+
+    nlp = get_nlp_model()
+    processed_description = user_messages_text # Default to concatenated raw user messages
+    
+    if nlp != "unavailable":
+        doc = nlp(user_messages_text)
+        keywords = [token.lemma_ for token in doc if token.pos_ in ["NOUN", "VERB", "ADJ"] and not token.is_stop]
+        
+        # Create a concise summary or use keywords
+        if keywords:
+            summary_keywords = ", ".join(sorted(list(set(keywords))[:15])) # Limit to 15 unique keywords for summary
+            processed_description = f"Chat Summary (Keywords): {summary_keywords}"
+        else: # Fallback if no useful keywords found after filtering
+            processed_description = "Chat Transcript Overview: " + user_messages_text[:200] + ("..." if len(user_messages_text) > 200 else "")
+
+
+        persons = [ent.text for ent in doc.ents if ent.label_ == "PERSON"]
+        if persons:
+            extracted_entities_info = f"\n\nMentioned Persons: {', '.join(list(set(persons)))}"
+            processed_description += extracted_entities_info
+    else:
+        processed_description = user_messages_text + "\n\n(NLP processing unavailable)"
+
+    # Ticket Creation
+    # Title: "Chat Session: [chat_session_id]" or use the first user message text
+    first_user_message = next((msg.get("text", "") for msg in message_list if msg.get("sender") == "user" and msg.get("text")), None)
+    ticket_title = f"Chat: {first_user_message[:50]}..." if first_user_message else f"Chat Session: {chat_session_id}"
+    if len(ticket_title) > 95: # Ensure title is not too long if first message is long
+        ticket_title = ticket_title[:95] + "..."
+
+
+    new_ticket = Ticket(title=ticket_title,
+                        description=processed_description,
+                        status="Open",
+                        user_id=target_user.id, # Use the validated end_user_id
+                        agent_id=None) # agent_id of the ticket creator (SupportAgent) could be current_user.id
+                        # For now, keeping it None as per instruction "let's make it None for now"
+    db.session.add(new_ticket)
+    try:
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": "Failed to create ticket from chat", "details": str(e)}), 500
+
+    return jsonify({"message": "Ticket created successfully from chat", "ticket_id": new_ticket.id}), 201

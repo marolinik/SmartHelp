@@ -241,5 +241,159 @@ def test_nlp_mock_is_active(client, init_database):
     # with .lemma_ as "this", "is", "a", "simple", "test", "body". All have .pos_ "NOUN".
     # So, keywords list will be ["this", "is", "a", "simple", "test", "body"].
     # The description should be "Keywords: this, is, a, simple, test, body"
+    # The view's NLP processing for chat:
+    # keywords = [token.lemma_ for token in doc if token.pos_ in ["NOUN", "VERB", "ADJ"] and not token.is_stop]
+    # The mock doesn't implement is_stop, so all tokens will be considered.
     assert "Keywords: this, is, a, simple, test, body" in ticket.description
     assert "Mentioned Persons:" not in ticket.description # No "John Doe"
+
+
+# --- Tests for /ingest/chat endpoint ---
+
+def test_ingest_chat_valid_by_support_agent(client, init_database, new_agent, new_user):
+    """Test Case 1: Valid Chat Ingestion by SupportAgent."""
+    # Log in as the SupportAgent
+    with client: # Using 'with client' to ensure session context for login
+        login_response = client.post(url_for('auth.login'), data={
+            'email': new_agent.email,
+            'password': 'agentpassword' # from new_agent fixture
+        }, follow_redirects=True)
+        assert login_response.status_code == 200 # Check login success
+
+        chat_payload = {
+            "user_id": new_user.id,
+            "chat_session_id": "chat_session_12345",
+            "message_list": [
+                {"sender": "user", "text": "Hello, I have an issue with my account."},
+                {"sender": "agent", "text": "Hi there! How can I help you today?"},
+                {"sender": "user", "text": "My account seems to be locked. John Doe also said his is locked."},
+                {"sender": "user", "text": "Can you check it?"}
+            ]
+        }
+        response = client.post(url_for('ingestion.ingest_chat'), json=chat_payload)
+
+    assert response.status_code == 201
+    json_data = response.get_json()
+    assert json_data["message"] == "Ticket created successfully from chat"
+    assert "ticket_id" in json_data
+
+    ticket = Ticket.query.get(json_data["ticket_id"])
+    assert ticket is not None
+    assert ticket.user_id == new_user.id
+    # Title generation: "Chat: {first_user_message[:50]}..."
+    expected_title_start = "Chat: Hello, I have an issue with my account."[:50]
+    assert ticket.title.startswith(expected_title_start)
+    
+    # Description based on mocked NLP:
+    # User messages: "Hello, I have an issue with my account. My account seems to be locked. John Doe also said his is locked. Can you check it?"
+    # Mock keywords (unique, sorted, [:15]): "account", "can", "check", "doe", "hello", "his", "i", "is", "issue", "it", "john", "locked", "my", "said", "seems", "to", "with", "you" (will be less than 15 after stop word removal in actual view)
+    # The mock currently doesn't do stop word removal, but the view's chat ingestion does.
+    # Mocked keywords (all tokens, as mock doesn't have stop words):
+    # "account", "also", "be", "can", "check", "doe", "have", "hello", "his", "i", "is", "issue", "it", "john", "locked", "my", "said", "seems", "to", "with", "you"
+    # The view implementation uses `and not token.is_stop`. Our mock doesn't have `is_stop`.
+    # Let's adjust the mock or the assertion. The mock should reflect the view's logic more closely for chat.
+    # For now, we'll assert based on the current mock + view logic.
+    # The view's get_nlp_model -> MockSpacyDoc -> MockSpacyToken (lemma_ = text.lower(), pos_="NOUN")
+    # The view's chat ingestion: keywords = [token.lemma_ for token in doc if token.pos_ in ["NOUN", "VERB", "ADJ"] and not token.is_stop]
+    # Our mock token doesn't have `is_stop`. So all tokens become keywords.
+    # Then: summary_keywords = ", ".join(sorted(list(set(keywords))[:15]))
+    # processed_description = f"Chat Summary (Keywords): {summary_keywords}"
+    # Plus "Mentioned Persons: John Doe"
+    
+    assert "Chat Summary (Keywords):" in ticket.description
+    assert "account" in ticket.description # from user messages
+    assert "locked" in ticket.description
+    assert "Mentioned Persons: John Doe" in ticket.description
+
+
+def test_ingest_chat_unauthorized_by_enduser(client, init_database, new_user, new_agent):
+    """Test Case 2: Unauthorized Access (e.g., by EndUser)."""
+    # `new_user` will be the one trying to ingest, `another_user` is the target for the ticket.
+    another_user = User(username="targetenduser", email="target@example.com", role="EndUser", password_hash="test")
+    db.session.add(another_user)
+    db.session.commit()
+
+    with client:
+        login_response = client.post(url_for('auth.login'), data={
+            'email': new_user.email, # Logging in as an EndUser
+            'password': 'testpassword'
+        }, follow_redirects=True)
+        assert login_response.status_code == 200
+
+        chat_payload = {
+            "user_id": another_user.id,
+            "chat_session_id": "chat_session_forbidden",
+            "message_list": [{"sender": "user", "text": "This should not work."}]
+        }
+        response = client.post(url_for('ingestion.ingest_chat'), json=chat_payload)
+
+    assert response.status_code == 403
+    json_data = response.get_json()
+    assert "Unauthorized. Only Support Agents can ingest chats." in json_data["error"]
+
+
+def test_ingest_chat_invalid_user_id(client, init_database, new_agent):
+    """Test Case 3: Invalid user_id (User Not Found)."""
+    with client:
+        login_response = client.post(url_for('auth.login'), data={
+            'email': new_agent.email,
+            'password': 'agentpassword'
+        }, follow_redirects=True)
+        assert login_response.status_code == 200
+
+        non_existent_user_id = 99999
+        chat_payload = {
+            "user_id": non_existent_user_id,
+            "chat_session_id": "chat_session_user_not_found",
+            "message_list": [{"sender": "user", "text": "Testing invalid user ID."}]
+        }
+        response = client.post(url_for('ingestion.ingest_chat'), json=chat_payload)
+
+    assert response.status_code == 404
+    json_data = response.get_json()
+    assert f"User with ID {non_existent_user_id} not found or is not an EndUser." in json_data["error"]
+
+
+def test_ingest_chat_malformed_payload_missing_message_list(client, init_database, new_agent, new_user):
+    """Test Case 4: Malformed Payload (Missing message_list)."""
+    with client:
+        login_response = client.post(url_for('auth.login'), data={
+            'email': new_agent.email,
+            'password': 'agentpassword'
+        }, follow_redirects=True)
+        assert login_response.status_code == 200
+
+        chat_payload = {
+            "user_id": new_user.id,
+            "chat_session_id": "chat_session_malformed"
+            # "message_list" is missing
+        }
+        response = client.post(url_for('ingestion.ingest_chat'), json=chat_payload)
+    
+    assert response.status_code == 400
+    json_data = response.get_json()
+    assert "Missing user_id, chat_session_id, or message_list (must be a list)" in json_data["error"]
+
+
+def test_ingest_chat_malformed_payload_no_user_messages(client, init_database, new_agent, new_user):
+    """Test Malformed Payload (message_list contains no user messages)."""
+    with client:
+        login_response = client.post(url_for('auth.login'), data={
+            'email': new_agent.email,
+            'password': 'agentpassword'
+        }, follow_redirects=True)
+        assert login_response.status_code == 200
+
+        chat_payload = {
+            "user_id": new_user.id,
+            "chat_session_id": "chat_session_no_user_msg",
+            "message_list": [
+                {"sender": "agent", "text": "Hello, how can I help?"},
+                {"sender": "system", "text": "Chat started."}
+            ]
+        }
+        response = client.post(url_for('ingestion.ingest_chat'), json=chat_payload)
+    
+    assert response.status_code == 400 # As per current logic, no user messages leads to error
+    json_data = response.get_json()
+    assert "No user messages found in the chat to process." in json_data["error"]
