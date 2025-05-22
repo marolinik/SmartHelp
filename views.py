@@ -247,3 +247,108 @@ def chatbot_message():
             create_ticket_prompt = True
     
     return jsonify({'response': bot_response, 'create_ticket_prompt': create_ticket_prompt, 'ticket_created_info': ticket_created_info})
+
+# --- Email Ingestion Blueprint ---
+ingestion_bp = Blueprint('ingestion', __name__)
+
+# Lazy load spaCy model
+nlp_model = None
+
+def get_nlp_model():
+    global nlp_model
+    if nlp_model is None:
+        try:
+            import spacy
+            nlp_model = spacy.load("en_core_web_sm")
+        except ImportError:
+            print("spaCy not installed. Run pip install spacy")
+            nlp_model = "unavailable" # Mark as unavailable
+        except OSError:
+            print("spaCy model 'en_core_web_sm' not found. Run: python -m spacy download en_core_web_sm")
+            nlp_model = "unavailable"
+    return nlp_model
+
+def generate_unique_username(email_prefix, existing_usernames):
+    """Generates a unique username based on email prefix."""
+    username = email_prefix
+    if username in existing_usernames:
+        import random
+        import string
+        suffix = ''.join(random.choices(string.ascii_lowercase + string.digits, k=4))
+        username = f"{email_prefix}_{suffix}"
+        while username in existing_usernames: # Highly unlikely to loop, but good practice
+            suffix = ''.join(random.choices(string.ascii_lowercase + string.digits, k=4))
+            username = f"{email_prefix}_{suffix}"
+    return username
+
+
+@ingestion_bp.route('/ingest/email', methods=['POST'])
+def ingest_email():
+    data = request.get_json()
+    if not data:
+        return jsonify({"error": "Invalid JSON payload"}), 400
+
+    sender_email = data.get('sender_email')
+    subject = data.get('subject')
+    body = data.get('body')
+
+    if not all([sender_email, subject, body]):
+        return jsonify({"error": "Missing sender_email, subject, or body"}), 400
+
+    # NLP Processing
+    nlp = get_nlp_model()
+    processed_description = body # Default to full body
+    extracted_entities_info = ""
+
+    if nlp != "unavailable":
+        doc = nlp(body)
+        keywords = [token.lemma_ for token in doc if token.pos_ in ["NOUN", "VERB", "ADJ"]]
+        if keywords:
+            processed_description = "Keywords: " + ", ".join(keywords)
+        
+        persons = [ent.text for ent in doc.ents if ent.label_ == "PERSON"]
+        if persons:
+            extracted_entities_info = f"\n\nMentioned Persons: {', '.join(persons)}"
+            processed_description += extracted_entities_info
+    else:
+        processed_description = body + "\n\n(NLP processing unavailable)"
+
+
+    # User Identification/Creation
+    user = User.query.filter_by(email=sender_email).first()
+    if not user:
+        email_prefix = sender_email.split('@')[0].replace('.', '_').replace('-', '_')
+        # Check against existing usernames to ensure uniqueness
+        existing_usernames = {u.username for u in User.query.with_entities(User.username).all()}
+        username = generate_unique_username(email_prefix, existing_usernames)
+        
+        # Generate a random password (for POC, not actually sent or stored for user login)
+        import secrets
+        password = secrets.token_urlsafe(16)
+        hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
+
+        user = User(username=username, 
+                    email=sender_email, 
+                    password_hash=hashed_password, 
+                    role='EndUser')
+        db.session.add(user)
+        try:
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            return jsonify({"error": "Failed to create new user", "details": str(e)}), 500
+    
+    # Ticket Creation
+    new_ticket = Ticket(title=subject,
+                        description=processed_description,
+                        status="Open",
+                        user_id=user.id,
+                        agent_id=None)
+    db.session.add(new_ticket)
+    try:
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": "Failed to create ticket", "details": str(e)}), 500
+
+    return jsonify({"message": "Ticket created successfully", "ticket_id": new_ticket.id}), 201

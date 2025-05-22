@@ -16,12 +16,13 @@ login_manager.login_view = 'auth.login'  # 'auth' is the blueprint name, 'login'
 login_manager.login_message_category = 'info'
 
 # Import blueprints after app initialization to avoid circular imports
-from views import auth_bp, main_bp, ticket_bp, kb_bp, chatbot_bp # Added chatbot_bp
+from views import auth_bp, main_bp, ticket_bp, kb_bp, chatbot_bp, ingestion_bp # Added ingestion_bp
 app.register_blueprint(auth_bp, url_prefix='/auth')
 app.register_blueprint(main_bp)
 app.register_blueprint(ticket_bp, url_prefix='/ticket')
 app.register_blueprint(kb_bp, url_prefix='/kb')
-app.register_blueprint(chatbot_bp, url_prefix='/chatbot') # Register chatbot_bp
+app.register_blueprint(chatbot_bp, url_prefix='/chatbot')
+app.register_blueprint(ingestion_bp, url_prefix='/ingest') # Register ingestion_bp
 
 if __name__ == '__main__':
     app.run(debug=True)

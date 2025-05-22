@@ -54,7 +54,7 @@
     - Manual testing of all MVP features still recommended.
     - Gather initial feedback (simulated) and identify areas for immediate improvement.
 
-- **[ ] 8. Submit the Initial MVP code and `tasks.md` file.**
+- **[X] 8. Submit the Initial MVP code and `tasks.md` file.**
     - Commit the initial project structure, basic features, and this `tasks.md` file.
 
 ## Phase 2: Advanced Features & AI Enhancements (Post-MVP)
@@ -62,10 +62,11 @@
 *(Based on the PRD - IntelliSe.md)*
 
 ### Intelligent Ticket Management System (Enhancements)
-- **[ ] AI-Driven Ticket Creation & Enrichment:**
-    - Auto-create tickets from email, chat (actual integration).
-    - NLP to parse and auto-populate fields.
-    - Link new tickets with past tickets/customer history.
+- **[P] AI-Driven Ticket Creation & Enrichment:** (Email POC Complete)
+    - **[X] Auto-create tickets from email (POC via `/ingest/email` endpoint with spaCy for basic NLP).**
+    - [ ] Auto-create tickets from chat (actual integration).
+    - [ ] Advanced NLP to parse and auto-populate fields (beyond POC keywords/entities).
+    - [ ] Link new tickets with past tickets/customer history.
 - **[ ] AI-Powered Ticket Categorization & Prioritization:**
     - ML for auto-classification (topic, urgency, sentiment, business impact).
     - Dynamic prioritization based on rules and AI factors.

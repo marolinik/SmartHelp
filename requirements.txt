@@ -7,3 +7,5 @@ Flask-WTF
 pytest
 pytest-flask
 email-validator
+spacy # For NLP
+# After installing requirements, run: python -m spacy download en_core_web_sm
