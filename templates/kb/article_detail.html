@@ -1,0 +1,25 @@
+{% extends "layouts/base.html" %}
+{% block content %}
+    <div class="container mt-4">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h3>{{ article.title }}</h3>
+                {% if article.category %}
+                    <span class="badge badge-secondary">{{ article.category }}</span>
+                {% endif %}
+            </div>
+            <div class="card-body">
+                <p class="card-text">{{ article.content|safe }}</p> {# Assuming content might be HTML, use |safe if it's trusted. Otherwise, render as plain text. #}
+                <hr>
+                <p><small class="text-muted">Authored by: {{ article.kb_author.username }}</small></p>
+                <p><small class="text-muted">Created: {{ article.created_at.strftime('%Y-%m-%d %H:%M') }} | Last Updated: {{ article.updated_at.strftime('%Y-%m-%d %H:%M') }}</small></p>
+            </div>
+            <div class="card-footer">
+                <a href="{{ url_for('kb.article_list') }}" class="btn btn-primary">Back to Knowledge Base</a>
+                {% if current_user.role == 'SupportAgent' %}
+                    <a href="{{ url_for('kb.edit_kb_article', article_id=article.id) }}" class="btn btn-secondary">Edit Article</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+{% endblock content %}

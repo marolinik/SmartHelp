@@ -1,0 +1,105 @@
+{% extends "layouts/base.html" %}
+{% block content %}
+<div class="container mt-4">
+    <h2>IntelliServe Chatbot</h2>
+    <div class="card">
+        <div class="card-header">Chat</div>
+        <div class="card-body" id="chat-window" style="height: 400px; overflow-y: scroll;">
+            <!-- Chat messages will appear here -->
+            <div class="media mb-2">
+                <div class="media-body">
+                    <div class="bg-light p-2 rounded">
+                        <strong>Bot:</strong> Hello {{ current_user.username }}! How can I help you today?
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="card-footer">
+            <form id="chat-form">
+                <div class="input-group">
+                    <input type="text" id="user-message" class="form-control" placeholder="Type your message..." autocomplete="off">
+                    <div class="input-group-append">
+                        <button type="submit" class="btn btn-primary">Send</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const chatWindow = document.getElementById('chat-window');
+        const chatForm = document.getElementById('chat-form');
+        const userMessageInput = document.getElementById('user-message');
+        let previousIntent = null; // To track if the bot is waiting for a ticket description
+
+        chatForm.addEventListener('submit', function(event) {
+            event.preventDefault();
+            const messageText = userMessageInput.value.trim();
+            if (messageText === '') {
+                return;
+            }
+
+            appendMessage('User', messageText);
+            userMessageInput.value = ''; // Clear input
+
+            fetch("{{ url_for('chatbot.chatbot_message') }}", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token() if csrf_token else "" }}' // Add CSRF token if your app uses Flask-WTF CSRF globally
+                },
+                body: JSON.stringify({ message: messageText, previous_intent: previousIntent })
+            })
+            .then(response => response.json())
+            .then(data => {
+                appendMessage('Bot', data.response, true); // Pass true to allow HTML
+                if (data.create_ticket_prompt) {
+                    previousIntent = 'create_ticket_prompt';
+                } else {
+                    previousIntent = null; // Reset if not expecting a ticket description
+                }
+                if (data.ticket_created_info) {
+                    // Optionally, you could add a specific message or update UI about the new ticket
+                    console.log("Ticket created:", data.ticket_created_info);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                appendMessage('Bot', 'Sorry, something went wrong. Please try again later.');
+            });
+        });
+
+        function appendMessage(sender, message, allowHTML = false) {
+            const messageElement = document.createElement('div');
+            messageElement.classList.add('media', 'mb-2');
+
+            const mediaBody = document.createElement('div');
+            mediaBody.classList.add('media-body');
+
+            const messageBubble = document.createElement('div');
+            messageBubble.classList.add('p-2', 'rounded');
+            messageBubble.classList.add(sender === 'User' ? 'bg-primary' : 'bg-light');
+            if (sender === 'User') messageBubble.classList.add('text-white');
+
+
+            const senderStrong = document.createElement('strong');
+            senderStrong.textContent = sender + ': ';
+            
+            if (allowHTML) {
+                messageBubble.innerHTML = senderStrong.outerHTML + message;
+            } else {
+                messageBubble.appendChild(senderStrong);
+                messageBubble.appendChild(document.createTextNode(message));
+            }
+            
+
+            mediaBody.appendChild(messageBubble);
+            messageElement.appendChild(mediaBody);
+            chatWindow.appendChild(messageElement);
+            chatWindow.scrollTop = chatWindow.scrollHeight; // Auto-scroll to bottom
+        }
+    });
+</script>
+{% endblock content %}

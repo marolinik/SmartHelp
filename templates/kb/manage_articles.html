@@ -1,0 +1,42 @@
+{% extends "layouts/base.html" %}
+{% block content %}
+    <div class="container mt-4">
+        <h2>Manage Knowledge Base Articles</h2>
+        <div class="mb-3">
+            <a href="{{ url_for('kb.create_kb_article') }}" class="btn btn-success">Create New Article</a>
+        </div>
+        {% if articles %}
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Title</th>
+                        <th>Category</th>
+                        <th>Author</th>
+                        <th>Created At</th>
+                        <th>Last Updated</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for article in articles %}
+                        <tr>
+                            <td>#{{ article.id }}</td>
+                            <td><a href="{{ url_for('kb.article_detail', article_id=article.id) }}">{{ article.title }}</a></td>
+                            <td>{{ article.category if article.category else 'N/A' }}</td>
+                            <td>{{ article.kb_author.username }}</td>
+                            <td>{{ article.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                            <td>{{ article.updated_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                            <td>
+                                <a href="{{ url_for('kb.edit_kb_article', article_id=article.id) }}" class="btn btn-primary btn-sm">Edit</a>
+                                {# Add delete button if implemented #}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p>No knowledge base articles found. <a href="{{ url_for('kb.create_kb_article') }}">Create the first one!</a></p>
+        {% endif %}
+    </div>
+{% endblock content %}

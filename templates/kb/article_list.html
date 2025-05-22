@@ -1,0 +1,33 @@
+{% extends "layouts/base.html" %}
+{% block content %}
+    <div class="container mt-4">
+        <h2>Knowledge Base</h2>
+        <form method="GET" action="{{ url_for('kb.article_list') }}" class="mb-4">
+            <div class="input-group">
+                <input type="text" name="query" class="form-control" placeholder="Search articles by title or content..." value="{{ query if query }}">
+                <div class="input-group-append">
+                    <button class="btn btn-outline-secondary" type="submit">Search</button>
+                </div>
+            </div>
+        </form>
+
+        {% if articles %}
+            <div class="list-group">
+                {% for article in articles %}
+                    <a href="{{ url_for('kb.article_detail', article_id=article.id) }}" class="list-group-item list-group-item-action">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h5 class="mb-1">{{ article.title }}</h5>
+                            <small>{{ article.created_at.strftime('%Y-%m-%d') }}</small>
+                        </div>
+                        <p class="mb-1">
+                            {{ article.content[:150] }}{% if article.content|length > 150 %}...{% endif %}
+                        </p>
+                        <small>Category: {{ article.category if article.category else 'General' }} | Author: {{ article.kb_author.username }}</small>
+                    </a>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p>No knowledge base articles found matching your search criteria or no articles have been created yet.</p>
+        {% endif %}
+    </div>
+{% endblock content %}

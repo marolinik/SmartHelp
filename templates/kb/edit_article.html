@@ -1,0 +1,60 @@
+{% extends "layouts/base.html" %}
+{% block content %}
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">Edit Knowledge Base Article - #{{ article.id }}</div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('kb.edit_kb_article', article_id=article.id) }}">
+                        {{ form.hidden_tag() }}
+                        <div class="form-group">
+                            {{ form.title.label(class="form-control-label") }}
+                            {% if form.title.errors %}
+                                {{ form.title(class="form-control form-control-lg is-invalid") }}
+                                <div class="invalid-feedback">
+                                    {% for error in form.title.errors %}
+                                        <span>{{ error }}</span>
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                {{ form.title(class="form-control form-control-lg") }}
+                            {% endif %}
+                        </div>
+                        <div class="form-group">
+                            {{ form.content.label(class="form-control-label") }}
+                            {% if form.content.errors %}
+                                {{ form.content(class="form-control form-control-lg is-invalid", rows="10") }}
+                                <div class="invalid-feedback">
+                                    {% for error in form.content.errors %}
+                                        <span>{{ error }}</span>
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                {{ form.content(class="form-control form-control-lg", rows="10") }}
+                            {% endif %}
+                        </div>
+                        <div class="form-group">
+                            {{ form.category.label(class="form-control-label") }}
+                            {% if form.category.errors %}
+                                {{ form.category(class="form-control form-control-lg is-invalid") }}
+                                <div class="invalid-feedback">
+                                    {% for error in form.category.errors %}
+                                        <span>{{ error }}</span>
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                {{ form.category(class="form-control form-control-lg") }}
+                            {% endif %}
+                        </div>
+                        <div class="form-group">
+                            {{ form.submit(class="btn btn-primary btn-lg btn-block") }}
+                        </div>
+                    </form>
+                </div>
+                <div class="card-footer">
+                     <a href="{{ url_for('kb.manage_kb_articles') }}" class="btn btn-secondary">Cancel</a>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock content %}

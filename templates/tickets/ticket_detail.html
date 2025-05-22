@@ -1,0 +1,53 @@
+{% extends "layouts/base.html" %}
+{% block content %}
+    <div class="container mt-4">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h3>Ticket #{{ ticket.id }} - {{ ticket.title }}</h3>
+                <span class="badge badge-info" style="font-size: 1em;">{{ ticket.status }}</span>
+            </div>
+            <div class="card-body">
+                <p><strong>Description:</strong></p>
+                <p>{{ ticket.description }}</p>
+                <hr>
+                <p><strong>Created by:</strong> {{ ticket.author.username }} on {{ ticket.created_at.strftime('%Y-%m-%d %H:%M') }}</p>
+                <p><strong>Last updated:</strong> {{ ticket.updated_at.strftime('%Y-%m-%d %H:%M') }}</p>
+                <p><strong>Assigned Agent:</strong> {{ ticket.agent.username if ticket.agent else 'Unassigned' }}</p>
+
+                {% if current_user.role == 'SupportAgent' %}
+                    <hr>
+                    <h4>Agent Actions</h4>
+                    {% if not ticket.agent or ticket.agent_id != current_user.id %}
+                    <form method="POST" action="{{ url_for('ticket.ticket_detail', ticket_id=ticket.id) }}" class="mb-3">
+                        {{ form.hidden_tag() if form }} {# Add CSRF token if form is present #}
+                        <input type="hidden" name="assign_to_me" value="true">
+                        <button type="submit" class="btn btn-info">
+                            {% if not ticket.agent %}Assign to Me{% else %}Reassign to Me{% endif %}
+                        </button>
+                    </form>
+                    {% endif %}
+
+                    {% if form %}
+                    <form method="POST" action="{{ url_for('ticket.ticket_detail', ticket_id=ticket.id) }}">
+                        {{ form.hidden_tag() }}
+                        <div class="form-group">
+                            {{ form.status.label(class="form-control-label") }}
+                            {{ form.status(class="form-control") }}
+                        </div>
+                        <div class="form-group">
+                            {{ form.submit(class="btn btn-primary") }}
+                        </div>
+                    </form>
+                    {% endif %}
+                {% endif %}
+            </div>
+            <div class="card-footer">
+                {% if current_user.role == 'EndUser' and ticket.author == current_user %}
+                    <a href="{{ url_for('ticket.my_tickets') }}" class="btn btn-secondary">Back to My Tickets</a>
+                {% elif current_user.role == 'SupportAgent' %}
+                    <a href="{{ url_for('ticket.all_tickets') }}" class="btn btn-secondary">Back to All Tickets</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+{% endblock content %}
