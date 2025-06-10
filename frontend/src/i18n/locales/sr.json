@@ -1,0 +1,361 @@
+{
+  "common": {
+    "loading": "Учитавање...",
+    "error": "Грешка",
+    "success": "Успех",
+    "warning": "Упозорење",
+    "info": "Информација",
+    "save": "Сачувај",
+    "cancel": "Откажи",
+    "delete": "Обриши",
+    "edit": "Измени",
+    "view": "Прикажи",
+    "create": "Креирај",
+    "update": "Ажурирај",
+    "search": "Претрага",
+    "filter": "Филтер",
+    "clear": "Очисти",
+    "submit": "Пошаљи",
+    "close": "Затвори",
+    "back": "Назад",
+    "next": "Следеће",
+    "previous": "Претходно",
+    "yes": "Да",
+    "no": "Не",
+    "confirm": "Потврди",
+    "required": "Обавезно поље"
+  },
+  "auth": {
+    "login": "Пријава",
+    "logout": "Одјава",
+    "username": "Корисничко име",
+    "password": "Лозинка",
+    "loginButton": "Пријави се",
+    "loginTitle": "Пријава на PIO Help Desk",
+    "loginSubtitle": "Унесите ваше податке за пријаву",
+    "invalidCredentials": "Неисправни подаци за пријаву",
+    "loginSuccess": "Успешно сте се пријавили",
+    "logoutSuccess": "Успешно сте се одјавили",
+    "sessionExpired": "Сесија је истекла. Молимо пријавите се поново.",
+    "changePassword": "Промени лозинку",
+    "oldPassword": "Стара лозинка",
+    "newPassword": "Нова лозинка",
+    "confirmPassword": "Потврди лозинку",
+    "passwordChanged": "Лозинка је успешно промењена"
+  },
+  "navigation": {
+    "dashboard": "Контролна табла",
+    "tickets": "Тикети",
+    "myTickets": "Моји тикети",
+    "allTickets": "Сви тикети",
+    "createTicket": "Креирај тикет",
+    "knowledgeBase": "База знања",
+    "users": "Корисници",
+    "reports": "Извештаји",
+    "settings": "Подешавања",
+    "profile": "Профил",
+    "administration": "Администрација"
+  },
+  "tickets": {
+    "title": "Тикети",
+    "ticketNumber": "Број тикета",
+    "subject": "Наслов",
+    "description": "Опис",
+    "status": "Статус",
+    "priority": "Приоритет",
+    "category": "Категорија",
+    "assignedTo": "Додељено",
+    "customer": "Корисник",
+    "createdAt": "Креирано",
+    "updatedAt": "Ажурирано",
+    "dueDate": "Рок",
+    "resolution": "Решење",
+    "comments": "Коментари",
+    "attachments": "Прилози",
+    "createTicket": "Креирај тикет",
+    "editTicket": "Измени тикет",
+    "viewTicket": "Прикажи тикет",
+    "assignTicket": "Додели тикет",
+    "closeTicket": "Затвори тикет",
+    "reopenTicket": "Поново отвори тикет",
+    "addComment": "Додај коментар",
+    "internalComment": "Интерни коментар",
+    "publicComment": "Јавни коментар",
+    "ticketCreated": "Тикет је успешно креиран",
+    "ticketUpdated": "Тикет је успешно ажуриран",
+    "ticketClosed": "Тикет је затворен",
+    "commentAdded": "Коментар је додат",
+    "noTickets": "Нема тикета за приказ",
+    "searchTickets": "Претражи тикете",
+    "filterByStatus": "Филтрирај по статусу",
+    "filterByPriority": "Филтрирај по приоритету",
+    "filterByCategory": "Филтрирај по категорији"
+  },
+  "status": {
+    "open": "Отворен",
+    "in_progress": "У раду",
+    "pending": "На чекању",
+    "resolved": "Решен",
+    "closed": "Затворен",
+    "cancelled": "Отказан"
+  },
+  "priority": {
+    "low": "Низак",
+    "medium": "Средњи",
+    "high": "Висок",
+    "critical": "Критичан"
+  },
+  "users": {
+    "title": "Корисници",
+    "firstName": "Име",
+    "lastName": "Презиме",
+    "email": "Email",
+    "department": "Одељење",
+    "role": "Улога",
+    "active": "Активан",
+    "inactive": "Неактиван",
+    "lastLogin": "Последња пријава",
+    "createUser": "Креирај корисника",
+    "editUser": "Измени корисника",
+    "userCreated": "Корисник је креиран",
+    "userUpdated": "Корисник је ажуриран",
+    "userDeactivated": "Корисник је деактивиран",
+    "userActivated": "Корисник је активиран"
+  },
+  "roles": {
+    "admin": "Администратор",
+    "l3_expert": "L3 Експерт",
+    "l2_specialist": "L2 Специјалиста",
+    "l1_agent": "L1 Агент",
+    "end_user": "Крајњи корисник"
+  },
+  "dashboard": {
+    "title": "Контролна табла",
+    "welcome": "Добродошли, {{name}}",
+    "totalTickets": "Укупно тикета",
+    "openTickets": "Отворени тикети",
+    "myTickets": "Моји тикети",
+    "overdueTickets": "Просрочени тикети",
+    "recentTickets": "Недавни тикети",
+    "quickActions": "Брзе акције",
+    "statistics": "Статистике",
+    "notifications": "Обавештења"
+  },
+  "errors": {
+    "networkError": "Грешка мреже. Проверите интернет везу.",
+    "serverError": "Грешка сервера. Покушајте поново касније.",
+    "notFound": "Страница није пронађена",
+    "unauthorized": "Немате дозволу за приступ овој страници",
+    "forbidden": "Забрањен приступ",
+    "validationError": "Грешка валидације",
+    "unexpectedError": "Неочекивана грешка"
+  },
+  "validation": {
+    "required": "Ово поље је обавезно",
+    "email": "Унесите исправну email адресу",
+    "minLength": "Минимално {{count}} карактера",
+    "maxLength": "Максимално {{count}} карактера",
+    "passwordMismatch": "Лозинке се не подударају",
+    "invalidFormat": "Неисправан формат"
+  },
+  "notifications": {
+    "ticketAssigned": "Тикет вам је додељен",
+    "ticketUpdated": "Тикет је ажуриран",
+    "commentAdded": "Нови коментар је додат",
+    "ticketOverdue": "Тикет је просрочен",
+    "slaWarning": "SLA упозорење"
+  },
+  "selfService": {
+    "nav": {
+      "portal": "Портал",
+      "selfService": "Самоуслуга",
+      "dashboard": "Почетна",
+      "dashboardDesc": "Преглед стања ваших тикета и статистика",
+      "newTicket": "Нови тикет",
+      "newTicketDesc": "Креирајте нови захтев за подршку",
+      "myTickets": "Моји тикети",
+      "myTicketsDesc": "Преглед и праћење ваших тикета",
+      "knowledgeBase": "База знања",
+      "knowledgeBaseDesc": "Претражите чланке и решења",
+      "profile": "Профил"
+    },
+    "footer": {
+      "allRights": "Сва права задржана.",
+      "needHelp": "Потребна вам је помоћ? Контактирајте нас:"
+    },
+    "dashboard": {
+      "title": "Портал за самоуслугу",
+      "welcome": "Добродошли у PIO Help Desk портал",
+      "description": "Овде можете креирати нове тикете, пратити постојеће захтеве и претраживати базу знања",
+      "quickStats": "Брза статистика",
+      "openTickets": "Отворени тикети",
+      "totalTickets": "Укупно тикета",
+      "avgResponseTime": "Просечно време одговора",
+      "recentActivity": "Недавна активност",
+      "quickActions": "Брзе акције",
+      "createTicketAction": "Креирај нови тикет",
+      "viewTicketsAction": "Прегледај моје тикете",
+      "searchKbAction": "Претражи базу знања",
+      "contactSupportAction": "Контактирај подршку",
+      "announcements": "Обавештења",
+      "noAnnouncements": "Тренутно нема важних обавештења"
+    },
+    "tickets": {
+      "myTickets": "Моји тикети",
+      "createNew": "Креирај нови тикет",
+      "ticketDetails": "Детаљи тикета",
+      "noTicketsFound": "Нема пронађених тикета",
+      "submitTicket": "Пошаљи тикет",
+      "ticketSubmitted": "Тикет је успешно послат",
+      "selectCategory": "Изаберите категорију",
+      "describeProblem": "Опишите ваш проблем",
+      "additionalInfo": "Додатне информације",
+      "urgency": "Хитност",
+      "attachFiles": "Приложите фајлове",
+      "trackingNumber": "Број за праћење: {{number}}",
+      "expectedResponse": "Очекивани одговор до: {{time}}"
+    },
+    "knowledgeBase": {
+      "title": "База знања",
+      "searchPlaceholder": "Претражите чланке, решења и упутства...",
+      "popularArticles": "Популарни чланци",
+      "recentArticles": "Најновији чланци",
+      "categories": "Категорије",
+      "noResults": "Нема резултата за вашу претрагу",
+      "tryDifferentKeywords": "Покушајте са другачијим кључним речима",
+      "articleHelpful": "Да ли вам је овај чланак помогао?",
+      "yes": "Да",
+      "no": "Не",
+      "thankYou": "Хвала вам на повратној информацији!",
+      "relatedArticles": "Сродни чланци"
+    },
+    "profile": {
+      "title": "Мој профил",
+      "personalInfo": "Лични подаци",
+      "contactInfo": "Контакт информације",
+      "preferences": "Подешавања",
+      "notifications": "Обавештења",
+      "emailNotifications": "Email обавештења",
+      "smsNotifications": "SMS обавештења",
+      "language": "Језик",
+      "timezone": "Временска зона",
+      "profileUpdated": "Профил је успешно ажуриран"
+    },
+    "common": {
+      "status": "Статус",
+      "priority": "Приоритет",
+      "category": "Категорија",
+      "created": "Креирано",
+      "lastUpdate": "Последње ажурирање",
+      "assignedTo": "Додељено",
+      "description": "Опис",
+      "attachments": "Прилози",
+      "comments": "Коментари",
+      "addComment": "Додај коментар",
+      "download": "Преузми",
+      "print": "Штампај",
+      "share": "Подели",
+      "bookmark": "Забележи",
+      "rateThis": "Оцени ово",
+      "helpful": "Корисно",
+      "notHelpful": "Није корисно"
+    },
+    "quickLinks": {
+      "title": "Брзе везе",
+      "subtitle": "Често тражене услуге и брзе акције за решавање уобичајених проблема",
+      "categories": {
+        "security": "Безбедност и приступ",
+        "software": "Софтвер и лиценце",
+        "hardware": "Хардвер и опрема",
+        "network": "Мрежа и интернет",
+        "communication": "Комуникација",
+        "office": "Канцеларијска опрема",
+        "data": "Подаци и backup"
+      },
+      "passwordReset": {
+        "title": "Ресетовање лозинке",
+        "description": "Заборавили сте лозинку или не можете да приступите налогу? Брзо ресетовање лозинке."
+      },
+      "softwareRequest": {
+        "title": "Захтев за софтвер",
+        "description": "Потребан вам је нови софтвер за рад? Поднесите захтев за инсталацију или лиценцу."
+      },
+      "hardwareIssue": {
+        "title": "Проблем са хардвером",
+        "description": "Рачунар не ради, монитор се не укључује или други хардверски проблеми."
+      },
+      "networkAccess": {
+        "title": "Приступ мрежи",
+        "description": "Проблеми са интернетом, WiFi мрежом или приступом серверима компаније."
+      },
+      "emailSetup": {
+        "title": "Подешавање email-а",
+        "description": "Помоћ око подешавања email налога на новом уређају или у апликацији."
+      },
+      "printerIssue": {
+        "title": "Проблем са штампачем",
+        "description": "Штампач не штампа, нема папира, грешке приликом штампања докумената."
+      },
+      "dataBackup": {
+        "title": "Backup података",
+        "description": "Потребан backup важних фајлова или обнављање података из резервне копије."
+      },
+      "accountAccess": {
+        "title": "Приступ налогу",
+        "description": "Проблеми са приступом корисничком налогу или недостајуће дозволе."
+      },
+      "emergency": {
+        "title": "Хитна подршка",
+        "description": "За критичне проблеме који блокирају рад, контактирајте хитну подршку директно:"
+      }
+    },
+    "announcements": {
+      "title": "Обавештења система",
+      "noAnnouncements": "Нема активних обавештења",
+      "viewDetails": "Прикажи детаље",
+      "dismiss": "Не приказуј више",
+      "acknowledge": "Потврди пријем",
+      "close": "Затвори",
+      "publishedOn": "Објављено",
+      "validUntil": "Важи до",
+      "types": {
+        "info": "Информација",
+        "warning": "Упозорење", 
+        "error": "Грешка",
+        "success": "Успех",
+        "maintenance": "Одржавање"
+      },
+      "priorities": {
+        "low": "Низак",
+        "medium": "Средњи",
+        "high": "Висок",
+        "urgent": "Хитно"
+      }
+    },
+    "notifications": {
+      "title": "Обавештења",
+      "noNotifications": "Нема обавештења",
+      "markAllRead": "Означи све",
+      "clearAll": "Обриши све",
+      "settings": "Подешавања обавештења",
+      "tabs": {
+        "all": "Све",
+        "unread": "Непрочитане",
+        "tickets": "Тикети",
+        "announcements": "Обавештења"
+      },
+      "preferences": {
+        "email": "Email обавештења",
+        "browser": "Browser обавештења", 
+        "sound": "Звучна обавештења",
+        "sms": "SMS обавештења"
+      },
+      "timeAgo": {
+        "justNow": "Управо сада",
+        "minutesAgo": "пре {count} мин",
+        "hoursAgo": "пре {count} сат{plural}",
+        "daysAgo": "пре {count} дан{plural}"
+      }
+    }
+  }
+} 

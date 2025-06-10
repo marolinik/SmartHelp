@@ -1,0 +1,36 @@
+name: Codespaces Prebuilds
+
+on:
+  push:
+    branches: [ main ]
+  schedule:
+    - cron: '0 3 * * 1' # Weekly on Monday at 3 AM
+
+jobs:
+  createPrebuild:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+          
+      - name: Cache dependencies
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.npm
+            backend/node_modules
+            frontend/node_modules
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          
+      - name: Install dependencies
+        run: |
+          cd backend && npm ci
+          cd ../frontend && npm ci
+          
+      - name: Notify on failure
+        if: failure()
+        run: echo "Prebuild failed! Check logs for details." 

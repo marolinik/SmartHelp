@@ -1,0 +1,47 @@
+{
+  "name": "pio-help-desk-system",
+  "version": "1.0.0",
+  "description": "PIO Fund Help Desk System with AI-Powered ITSM Platform - Serbian Government System",
+  "scripts": {
+    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "dev:backend": "cd backend && npm run dev",
+    "dev:frontend": "cd frontend && npm run dev",
+    "build": "npm run build:backend && npm run build:frontend",
+    "build:backend": "cd backend && npm run build",
+    "build:frontend": "cd frontend && npm run build",
+    "test": "npm run test:backend && npm run test:frontend",
+    "test:backend": "cd backend && npm test",
+    "test:frontend": "cd frontend && npm test",
+    "lint": "npm run lint:backend && npm run lint:frontend",
+    "lint:backend": "cd backend && npm run lint",
+    "lint:frontend": "cd frontend && npm run lint",
+    "format": "prettier --write \"**/*.{js,ts,tsx,json,md}\"",
+    "install:all": "npm install && cd backend && npm install && cd ../frontend && npm install",
+    "clean": "rimraf node_modules backend/node_modules frontend/node_modules backend/dist frontend/dist"
+  },
+  "keywords": [
+    "help-desk",
+    "itsm",
+    "serbian-government",
+    "pio-fund",
+    "ai-powered",
+    "ticketing-system"
+  ],
+  "author": "PIO Fund Serbia Development Team",
+  "license": "PROPRIETARY",
+  "devDependencies": {
+    "concurrently": "^8.2.2",
+    "prettier": "^3.1.0",
+    "rimraf": "^5.0.5",
+    "@types/node": "^20.10.0",
+    "typescript": "^5.3.0"
+  },
+  "workspaces": [
+    "frontend",
+    "backend"
+  ],
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  }
+} 

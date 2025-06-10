@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="sr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Offline - PIO Help Desk</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1976d2 0%, #1565c0 100%);
+            color: white;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 20px;
+        }
+        
+        .offline-container {
+            max-width: 500px;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 40px 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .offline-icon {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 20px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 36px;
+        }
+        
+        .offline-title {
+            font-size: 28px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: white;
+        }
+        
+        .offline-message {
+            font-size: 16px;
+            line-height: 1.6;
+            margin-bottom: 30px;
+            color: rgba(255, 255, 255, 0.9);
+        }
+        
+        .offline-features {
+            text-align: left;
+            margin-bottom: 30px;
+        }
+        
+        .offline-features h3 {
+            font-size: 18px;
+            margin-bottom: 15px;
+            color: white;
+        }
+        
+        .offline-features ul {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .offline-features li {
+            padding: 8px 0;
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 14px;
+        }
+        
+        .offline-features li:before {
+            content: "✓";
+            color: #4caf50;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        
+        .retry-button {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            padding: 12px 24px;
+            border-radius: 25px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+        
+        .retry-button:hover {
+            background: rgba(255, 255, 255, 0.3);
+            border-color: rgba(255, 255, 255, 0.5);
+            transform: translateY(-2px);
+        }
+        
+        .status-indicator {
+            margin-top: 20px;
+            padding: 10px;
+            border-radius: 10px;
+            font-size: 14px;
+        }
+        
+        .status-offline {
+            background: rgba(244, 67, 54, 0.2);
+            border: 1px solid rgba(244, 67, 54, 0.3);
+        }
+        
+        .status-online {
+            background: rgba(76, 175, 80, 0.2);
+            border: 1px solid rgba(76, 175, 80, 0.3);
+        }
+        
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: white;
+        }
+        
+        @media (max-width: 600px) {
+            .offline-container {
+                padding: 30px 20px;
+                margin: 20px;
+            }
+            
+            .offline-title {
+                font-size: 24px;
+            }
+            
+            .offline-message {
+                font-size: 14px;
+            }
+        }
+        
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.05);
+            }
+            100% {
+                transform: scale(1);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="offline-container">
+        <div class="logo">📞 PIO Help Desk</div>
+        
+        <div class="offline-icon pulse">
+            🌐
+        </div>
+        
+        <h1 class="offline-title">Нема интернет везе</h1>
+        
+        <p class="offline-message">
+            Тренутно нисте повезани на интернет. Неке функције су и даље доступне offline.
+        </p>
+        
+        <div class="offline-features">
+            <h3>Доступно offline:</h3>
+            <ul>
+                <li>Преглед кешираних тикета</li>
+                <li>Читање база знања (кеширано)</li>
+                <li>Креирање тикета (биће синхронизовано)</li>
+                <li>Приступ профилу</li>
+                <li>Преглед обавештења</li>
+            </ul>
+        </div>
+        
+        <button class="retry-button" onclick="retryConnection()">
+            Покушај поново
+        </button>
+        
+        <div id="status" class="status-indicator status-offline">
+            📴 Offline режим активан
+        </div>
+    </div>
+
+    <script>
+        // Check online status
+        function updateConnectionStatus() {
+            const statusEl = document.getElementById('status');
+            const retryButton = document.querySelector('.retry-button');
+            
+            if (navigator.onLine) {
+                statusEl.className = 'status-indicator status-online';
+                statusEl.innerHTML = '🌐 Веза успостављена - кликните за наставак';
+                retryButton.textContent = 'Настави са радом';
+                retryButton.onclick = () => {
+                    window.location.href = '/portal/dashboard';
+                };
+            } else {
+                statusEl.className = 'status-indicator status-offline';
+                statusEl.innerHTML = '📴 Offline режим активан';
+                retryButton.textContent = 'Покушај поново';
+                retryButton.onclick = retryConnection;
+            }
+        }
+        
+        function retryConnection() {
+            // Force check connection
+            fetch('/portal/dashboard', { 
+                mode: 'no-cors',
+                cache: 'no-cache'
+            }).then(() => {
+                // Connection successful
+                window.location.href = '/portal/dashboard';
+            }).catch(() => {
+                // Still offline
+                console.log('Још увек offline');
+                updateConnectionStatus();
+            });
+        }
+        
+        // Listen for online/offline events
+        window.addEventListener('online', updateConnectionStatus);
+        window.addEventListener('offline', updateConnectionStatus);
+        
+        // Initial status check
+        updateConnectionStatus();
+        
+        // Try to register service worker if not already registered
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/sw.js')
+                .then(registration => {
+                    console.log('SW registered from offline page:', registration);
+                })
+                .catch(error => {
+                    console.log('SW registration failed from offline page:', error);
+                });
+        }
+        
+        // Show install prompt if available
+        let deferredPrompt;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            
+            // Show install button
+            const installBtn = document.createElement('button');
+            installBtn.className = 'retry-button';
+            installBtn.textContent = 'Инсталирај апликацију';
+            installBtn.style.marginLeft = '10px';
+            installBtn.onclick = async () => {
+                if (deferredPrompt) {
+                    deferredPrompt.prompt();
+                    const { outcome } = await deferredPrompt.userChoice;
+                    if (outcome === 'accepted') {
+                        console.log('PWA installed');
+                    }
+                    deferredPrompt = null;
+                    installBtn.remove();
+                }
+            };
+            
+            document.querySelector('.retry-button').parentNode.appendChild(installBtn);
+        });
+    </script>
+</body>
+</html> 

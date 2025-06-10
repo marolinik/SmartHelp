@@ -1,0 +1,121 @@
+{
+  "name": "PIO Help Desk Portal",
+  "short_name": "PIO Help Desk",
+  "description": "Portal za samouslugu PIO Help Desk sistema",
+  "lang": "sr",
+  "start_url": "/portal/dashboard",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "theme_color": "#1976d2",
+  "background_color": "#ffffff",
+  "scope": "/portal/",
+  "categories": ["business", "productivity", "utilities"],
+  "icons": [
+    {
+      "src": "/icons/icon-72x72.png",
+      "sizes": "72x72",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-96x96.png",
+      "sizes": "96x96",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-128x128.png",
+      "sizes": "128x128",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-144x144.png",
+      "sizes": "144x144",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-152x152.png",
+      "sizes": "152x152",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-384x384.png",
+      "sizes": "384x384",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/screenshots/desktop-dashboard.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Dashboard pregled na desktop verziji"
+    },
+    {
+      "src": "/screenshots/mobile-tickets.png",
+      "sizes": "360x640",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Pregled tiketa na mobilnom uređaju"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Kreiranje novog tiketa",
+      "short_name": "Novi tiket",
+      "description": "Brzo kreiranje novog tiket za podršku",
+      "url": "/portal/ticket/new",
+      "icons": [
+        {
+          "src": "/icons/shortcut-new-ticket.png",
+          "sizes": "96x96"
+        }
+      ]
+    },
+    {
+      "name": "Moji tiketi",
+      "short_name": "Tiketi",
+      "description": "Pregled i praćenje vaših tiketa",
+      "url": "/portal/tickets",
+      "icons": [
+        {
+          "src": "/icons/shortcut-my-tickets.png",
+          "sizes": "96x96"
+        }
+      ]
+    },
+    {
+      "name": "Baza znanja",
+      "short_name": "KB",
+      "description": "Pretražite bazu znanja i rešenja",
+      "url": "/portal/knowledge-base",
+      "icons": [
+        {
+          "src": "/icons/shortcut-kb.png",
+          "sizes": "96x96"
+        }
+      ]
+    }
+  ],
+  "prefer_related_applications": false,
+  "edge_side_panel": {
+    "preferred_width": 400
+  }
+} 

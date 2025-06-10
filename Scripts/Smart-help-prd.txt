@@ -1,0 +1,928 @@
+Product Requirements Document (PRD)
+PIO Fund Help Desk System with AI-Powered ITSM Platform
+Version: 3.0
+Date: May 29, 2025
+Document Status: Final
+
+Table of Contents
+
+Executive Summary
+Project Overview
+Stakeholders
+Business Objectives
+Scope and Requirements
+System Architecture
+Functional Requirements
+Non-Functional Requirements
+Implementation Strategy
+Success Metrics
+Risk Management
+Appendices
+
+
+1. Executive Summary
+The PIO Fund Serbia requires a comprehensive IT Help Desk system to support approximately 1,000 users across multiple branches. This system will implement a three-tier support structure (L1, L2, L3) aligned with ITSM best practices, featuring AI-powered automation, self-service capabilities, and a centralized knowledge base.
+The system will be implemented to support the CORE 1 application launch scheduled for July 3, 2025, with demonstration capabilities required by May 13-16, 2025 for the training seminar.
+Key Deliverables:
+
+Multi-tier ticketing system with automated routing
+Self-service portal with AI chatbot
+Knowledge base with AI-powered suggestions
+SLA management and tracking
+Comprehensive reporting and analytics
+Integration with external vendor ticketing systems
+
+
+2. Project Overview
+2.1 Project Context
+The Republic Fund for Pension and Disability Insurance (PIO Fund) is implementing a new CORE 1 system for managing beneficiary records (CCAM). To ensure successful adoption and ongoing support, a robust Help Desk system is required.
+2.2 Current State
+Currently, IT support is fragmented across branches with no centralized ticketing or knowledge management system. This leads to:
+
+Inconsistent problem resolution
+No visibility into support metrics
+Knowledge silos within individual branches
+Inability to track SLA compliance
+
+2.3 Future State Vision
+A unified, AI-powered ITSM platform that:
+
+Centralizes all IT support requests
+Enables self-service for common issues
+Provides real-time visibility into support operations
+Automates routine tasks and escalations
+Builds institutional knowledge through AI analysis
+
+
+3. Stakeholders
+3.1 Primary Stakeholders
+StakeholderRoleKey InterestsVladimir StankovićDirector of PIO SectorOverall system success, SLA complianceRegional CoordinatorsL2 Support ManagementEfficient escalation, branch oversightBranch IT CoordinatorsL1 SupportLocal issue resolution, user trainingIT Sector Belgrade/Novi SadL3 Support & AdministrationSystem stability, integration managementExternal VendorsContracted SupportTicket integration, SLA adherenceEnd Users (1000+)System UsersQuick issue resolution, self-service
+3.2 RACI Matrix
+ActivityBranch UsersL1 SupportL2 RegionalL3 CentralIT AdminSubmit TicketsRCIIIL1 ResolutionIRCIAEscalationIRRCAKB CreationCRARASLA DefinitionICCRA
+
+4. Business Objectives
+4.1 Primary Objectives
+
+Improve Support Efficiency
+
+Reduce average resolution time by 40%
+Achieve 70% first-contact resolution rate for L1
+Decrease ticket backlog by 60%
+
+
+Enhance User Satisfaction
+
+Achieve 85% user satisfaction score (CSAT)
+Provide 24/7 self-service options
+Reduce repeat tickets by 50%
+
+
+Enable Knowledge Management
+
+Build comprehensive knowledge base with 500+ articles
+Achieve 30% ticket deflection through self-service
+Capture and share best practices across branches
+
+
+Ensure Service Quality
+
+Define and meet SLA targets for all priority levels
+Provide real-time performance visibility
+Enable data-driven decision making
+
+
+
+4.2 Strategic Alignment
+This system directly supports PIO Fund's digital transformation initiative and aligns with the Serbian government's e-Government strategy for improved public service delivery.
+
+5. Scope and Requirements
+5.1 In Scope
+5.1.1 Core Functionality
+
+Incident Management: Full lifecycle from creation to resolution
+Service Request Management: Standardized request handling
+Knowledge Management: Creation, approval, and maintenance of KB articles
+SLA Management: Definition, tracking, and reporting
+Self-Service Portal: User-friendly interface for ticket submission and KB access
+Reporting & Analytics: Real-time dashboards and scheduled reports
+
+5.1.2 AI-Powered Features
+
+Intelligent Ticket Routing: ML-based assignment suggestions
+Auto-Categorization: NLP analysis for ticket classification
+Knowledge Suggestions: Context-aware KB recommendations
+Chatbot Support: Natural language processing for common queries
+Predictive Analytics: Trend analysis and capacity planning
+
+5.1.3 Integration Requirements
+
+Active Directory/LDAP: Single sign-on authentication
+Email System: Automated notifications
+External Vendor Systems: Bi-directional ticket synchronization
+CORE 1 System: User and configuration data exchange
+
+5.2 Out of Scope
+
+Change Management (future phase)
+Problem Management (future phase)
+Configuration Management Database (CMDB)
+Asset Management
+Direct infrastructure monitoring
+Development of business applications
+
+5.3 Constraints
+
+Must be operational before CORE 1 launch (July 3, 2025)
+Demo required for training seminar (May 13-16, 2025)
+Must support Serbian language interface
+Must comply with Serbian data protection regulations
+Budget constraints for external vendor integration
+
+
+6. System Architecture
+6.1 High-Level Architecture
+┌─────────────────────────────────────────────────────────────┐
+│                        Users (1000+)                         │
+└─────────────┬───────────────────────┬───────────────────────┘
+              │                       │
+              ▼                       ▼
+┌─────────────────────┐   ┌─────────────────────┐
+│   Self-Service      │   │    Agent Portal     │
+│      Portal         │   │   (L1, L2, L3)     │
+└─────────┬───────────┘   └──────────┬──────────┘
+          │                          │
+          ▼                          ▼
+┌─────────────────────────────────────────────────┐
+│              Application Layer                   │
+│  ┌─────────────┐  ┌──────────┐  ┌────────────┐ │
+│  │   Ticket    │  │    KB    │  │     AI     │ │
+│  │ Management  │  │  Engine  │  │  Services  │ │
+│  └─────────────┘  └──────────┘  └────────────┘ │
+└─────────────────────┬────────────────────────────┘
+                      │
+                      ▼
+┌─────────────────────────────────────────────────┐
+│              Data Layer                          │
+│  ┌─────────────┐  ┌──────────┐  ┌────────────┐ │
+│  │  PostgreSQL │  │  Redis   │  │Elasticsearch│ │
+│  │   Database  │  │  Cache   │  │   Search   │ │
+│  └─────────────┘  └──────────┘  └────────────┘ │
+└──────────────────────────────────────────────────┘
+6.2 Technology Stack
+6.2.1 Frontend
+
+Framework: React 18.x with TypeScript
+UI Library: Material-UI or Ant Design
+State Management: Redux Toolkit
+Real-time Updates: WebSocket (Socket.io)
+
+6.2.2 Backend
+
+API Framework: Node.js with Express or Python with FastAPI
+Authentication: JWT with AD/LDAP integration
+ORM: Sequelize (Node.js) or SQLAlchemy (Python)
+Task Queue: Bull (Redis-based)
+
+6.2.3 AI/ML Components
+
+NLP Engine: spaCy or Hugging Face Transformers
+ML Framework: TensorFlow or PyTorch
+Chatbot Platform: Rasa or custom implementation
+Vector Database: Pinecone or Weaviate for semantic search
+
+6.2.4 Infrastructure
+
+Containerization: Docker
+Orchestration: Kubernetes
+Reverse Proxy: Nginx
+Monitoring: Prometheus + Grafana
+
+6.3 Deployment Options
+
+On-Premise (Recommended for Phase 1)
+
+Deployed within PIO Fund data center
+Direct integration with internal systems
+Full data sovereignty
+
+
+Hybrid Cloud (Future consideration)
+
+Core data on-premise
+AI services in cloud
+Scalability for peak loads
+
+
+
+
+7. Functional Requirements
+7.1 User Management and Authentication
+7.1.1 User Roles and Permissions
+RoleDescriptionKey PermissionsEnd UserAll PIO Fund employeesCreate tickets, view own tickets, access KB, use self-serviceL1 AgentBranch support staff (8 planned)All End User permissions + manage L1 tickets, create KB draftsL2 SpecialistRegional coordinatorsAll L1 permissions + manage L2 tickets, approve KB articlesL3 ExpertCentral IT team (Belgrade/Novi Sad)All L2 permissions + manage L3 tickets, system configurationHelp Desk ManagerService managersView all tickets, generate reports, manage SLAsSystem AdministratorIT administratorsFull system access, user management, configuration
+7.1.2 Authentication Requirements
+
+FR-AUTH-01: System SHALL integrate with Active Directory for SSO
+FR-AUTH-02: System SHALL support role-based access control (RBAC)
+FR-AUTH-03: Session timeout SHALL be configurable (default: 30 minutes)
+FR-AUTH-04: System SHALL log all authentication attempts
+FR-AUTH-05: Multi-factor authentication SHOULD be supported for admin roles
+
+7.2 Ticket Management
+7.2.1 Ticket Creation
+FR-TICKET-01: Users SHALL be able to create tickets through:
+
+Self-service portal
+Email integration
+Agent interface (on behalf of users)
+API integration
+AI chatbot
+
+FR-TICKET-02: Required ticket fields:
+
+Title (max 255 characters)
+Description (rich text)
+Category (hierarchical selection)
+Priority (AI-suggested with manual override)
+Attachments (max 10MB per file, 50MB total)
+Contact information (auto-populated)
+
+FR-TICKET-03: System SHALL generate unique ticket ID (format: YYYYMMDD-NNNN)
+FR-TICKET-04: AI SHALL analyze ticket content and suggest:
+
+Category (confidence score >80%)
+Priority (based on keywords and historical data)
+Potential duplicate tickets
+Relevant KB articles
+
+7.2.2 Ticket Workflow
+FR-TICKET-05: Ticket Status Lifecycle:
+New → Assigned → In Progress → Pending (User/Vendor) → Resolved → Closed
+         ↓            ↓              ↓                      ↓
+    Escalated L2  Escalated L3   On Hold            Reopened
+FR-TICKET-06: Assignment Rules:
+
+Auto-assignment based on category, workload, and skills
+Manual assignment by agents/managers
+Round-robin distribution within teams
+AI-powered routing suggestions
+
+FR-TICKET-07: Escalation Triggers:
+
+Manual escalation with reason
+Automatic based on SLA breach
+Keyword-based (e.g., "system down", "urgent")
+Approval-based escalation workflow
+
+7.2.3 Communication and Collaboration
+FR-TICKET-08: Communication Features:
+
+Public comments (visible to users)
+Private notes (internal only)
+Email integration (replies update ticket)
+@mention functionality for collaboration
+Automated responses based on status changes
+
+FR-TICKET-09: Ticket Relationships:
+
+Parent-child relationships
+Related tickets
+Merged duplicates
+Split tickets
+
+7.3 Knowledge Base Management
+7.3.1 Article Creation and Management
+FR-KB-01: Article Lifecycle:
+Draft → Review → Published → Updated → Archived
+          ↓
+      Rejected
+FR-KB-02: Article Components:
+
+Title (SEO-optimized)
+Content (WYSIWYG editor with multimedia support)
+Categories (multiple)
+Tags (unlimited)
+Related articles (AI-suggested)
+Version history
+
+FR-KB-03: Approval Workflow:
+
+Configurable by category
+Multiple approvers support
+Automated notifications
+Rejection reasons tracking
+
+7.3.2 Search and Discovery
+FR-KB-04: Search Capabilities:
+
+Full-text search with Serbian language support
+Faceted search (category, date, author)
+Semantic search using AI
+Search suggestions and auto-complete
+Search analytics tracking
+
+FR-KB-05: AI-Powered Features:
+
+Automatic article suggestions during ticket creation
+Similar article recommendations
+Gap analysis for missing content
+Auto-tagging based on content analysis
+
+7.3.3 Feedback and Improvement
+FR-KB-06: Feedback Mechanisms:
+
+Article ratings (1-5 stars)
+Comments and suggestions
+"Was this helpful?" quick feedback
+View count tracking
+Link to create ticket if article doesn't help
+
+7.4 Self-Service Portal
+7.4.1 Portal Features
+FR-PORTAL-01: Homepage Dashboard:
+
+Quick ticket creation
+My open tickets
+Announcements (planned maintenance, known issues)
+Popular KB articles
+Quick links to common requests
+
+FR-PORTAL-02: Ticket Management:
+
+View ticket history
+Add comments/attachments
+Reopen resolved tickets
+Print ticket details
+Subscribe to ticket updates
+
+FR-PORTAL-03: AI Chatbot Integration:
+
+Natural language understanding in Serbian
+Guided ticket creation
+KB article suggestions
+Status checking
+Escalation to human agent
+
+7.5 SLA Management
+7.5.1 SLA Definition
+FR-SLA-01: SLA Components:
+
+Response time targets
+Resolution time targets
+Business hours calendar
+Holiday calendar
+Escalation rules
+
+FR-SLA-02: SLA Rules Engine:
+IF (Priority = Critical AND Category = "System Down") THEN
+    Response Time = 1 hour
+    Resolution Time = 4 hours
+    Escalation = Manager + L3
+7.5.2 SLA Tracking
+FR-SLA-03: Real-time Tracking:
+
+Visual indicators (green/amber/red)
+Time remaining displays
+Pause during "Pending User" status
+Business hours calculation
+Automated alerts at 50%, 75%, 90%
+
+FR-SLA-04: Breach Management:
+
+Automatic priority elevation
+Manager notifications
+Breach reason tracking
+Post-breach analysis reports
+
+7.6 Reporting and Analytics
+7.6.1 Operational Reports
+FR-REPORT-01: Standard Reports:
+
+Ticket Volume Analysis
+Resolution Time Trends
+First Contact Resolution Rate
+SLA Compliance Report
+Agent Performance Metrics
+Category Distribution Analysis
+User Satisfaction Scores
+
+FR-REPORT-02: Report Features:
+
+Customizable date ranges
+Multiple export formats (PDF, Excel, CSV)
+Scheduled email delivery
+Drill-down capabilities
+Comparative analysis (period-over-period)
+
+7.6.2 Dashboards
+FR-REPORT-03: Manager Dashboard:
+
+Real-time ticket queue
+SLA status overview
+Team performance metrics
+Trending issues
+Resource utilization
+Critical ticket alerts
+
+FR-REPORT-04: Agent Dashboard:
+
+My ticket queue
+Personal performance metrics
+Team comparison
+KB contribution stats
+Training recommendations
+
+7.6.3 Advanced Analytics
+FR-REPORT-05: AI-Powered Insights:
+
+Predictive ticket volume forecasting
+Anomaly detection
+Sentiment analysis of ticket content
+Capacity planning recommendations
+Knowledge gap identification
+
+7.7 AI and Automation Features
+7.7.1 Ticket Intelligence
+FR-AI-01: Auto-Categorization:
+
+Multi-class classification model
+Confidence scoring
+Continuous learning from corrections
+Category suggestion explanations
+
+FR-AI-02: Smart Routing:
+
+Skill-based assignment
+Workload balancing
+Historical performance consideration
+Availability checking
+
+FR-AI-03: Duplicate Detection:
+
+Similarity scoring
+Automatic linking suggestions
+Merge recommendations
+Root cause identification
+
+7.7.2 Knowledge Intelligence
+FR-AI-04: Content Recommendations:
+
+Context-aware suggestions
+User behavior analysis
+Collaborative filtering
+Relevance scoring
+
+FR-AI-05: Gap Analysis:
+
+Topic modeling on resolved tickets
+Uncovered issue identification
+Article creation prioritization
+Content quality scoring
+
+7.7.3 Conversational AI
+FR-AI-06: Chatbot Capabilities:
+
+Intent recognition (20+ intents)
+Entity extraction
+Multi-turn conversations
+Context preservation
+Sentiment detection
+Seamless handoff to agents
+
+FR-AI-07: Supported Interactions:
+
+Password reset guidance
+Ticket status checking
+KB article search
+FAQ responses
+Appointment scheduling
+Basic troubleshooting
+
+7.8 Integration Requirements
+7.8.1 Internal Systems
+FR-INT-01: Active Directory Integration:
+
+User authentication
+Group synchronization
+Profile information
+Password policies
+
+FR-INT-02: Email Integration:
+
+Ticket creation via email
+Reply-to-update functionality
+Attachment handling
+Email notifications
+
+FR-INT-03: CORE 1 System Integration:
+
+User data synchronization
+Module access information
+Error log correlation
+Performance metrics
+
+7.8.2 External Systems
+FR-INT-04: Vendor Ticketing Systems:
+
+Bi-directional ticket sync
+Status mapping
+Comment synchronization
+Attachment transfer
+SLA clock coordination
+
+FR-INT-05: API Requirements:
+
+RESTful API design
+OAuth 2.0 authentication
+Rate limiting
+Webhook support
+Comprehensive documentation
+
+7.9 Notification System
+7.9.1 Notification Types
+FR-NOTIF-01: User Notifications:
+
+Ticket created confirmation
+Status updates
+Agent responses
+Resolution notifications
+SLA warnings
+KB article updates
+
+FR-NOTIF-02: Agent Notifications:
+
+New ticket assignments
+Escalations
+SLA alerts
+Mentions/collaborations
+KB approval requests
+System announcements
+
+7.9.2 Delivery Channels
+FR-NOTIF-03: Multi-Channel Delivery:
+
+Email (primary)
+In-app notifications
+SMS (critical only)
+Desktop notifications
+Mobile push (future)
+
+FR-NOTIF-04: Preferences Management:
+
+User-configurable preferences
+Opt-in/opt-out by type
+Quiet hours setting
+Digest options
+Language preferences
+
+
+8. Non-Functional Requirements
+8.1 Performance Requirements
+NFR-PERF-01: Response Times:
+
+Page load: <3 seconds (95th percentile)
+Search results: <2 seconds
+Ticket creation: <5 seconds
+Report generation: <30 seconds
+API response: <500ms (simple queries)
+
+NFR-PERF-02: Throughput:
+
+Support 100 concurrent users
+Handle 1000 tickets/day
+Process 10,000 KB searches/day
+Send 5000 notifications/hour
+
+NFR-PERF-03: Resource Utilization:
+
+CPU usage <70% under normal load
+Memory usage <80% capacity
+Database connections pooled and optimized
+Caching for frequently accessed data
+
+8.2 Scalability Requirements
+NFR-SCALE-01: Horizontal Scaling:
+
+Support adding application servers
+Database read replicas
+Load balancer ready
+Microservices architecture compatible
+
+NFR-SCALE-02: Growth Projections:
+
+Scale to 2000 users within 2 years
+Handle 100% increase in ticket volume
+Support 10,000 KB articles
+Accommodate 5TB data growth annually
+
+8.3 Availability Requirements
+NFR-AVAIL-01: Uptime Targets:
+
+99.8% availability during business hours (Mon-Fri, 7:00-17:00)
+99% availability overall
+Planned maintenance windows: weekends only
+Maximum unplanned downtime: 4 hours/month
+
+NFR-AVAIL-02: Disaster Recovery:
+
+RPO (Recovery Point Objective): 1 hour
+RTO (Recovery Time Objective): 4 hours
+Daily backups with 30-day retention
+Geo-redundant backup storage
+Documented recovery procedures
+
+8.4 Security Requirements
+NFR-SEC-01: Data Protection:
+
+Encryption at rest (AES-256)
+Encryption in transit (TLS 1.3)
+Database encryption for sensitive fields
+Secure key management
+Data anonymization for test environments
+
+NFR-SEC-02: Access Control:
+
+Role-based permissions
+Principle of least privilege
+Regular access reviews
+Audit trail for all actions
+Session management
+
+NFR-SEC-03: Application Security:
+
+OWASP Top 10 compliance
+Regular security scanning
+Input validation
+SQL injection prevention
+XSS protection
+CSRF tokens
+
+NFR-SEC-04: Compliance:
+
+GDPR compliance for personal data
+Serbian data protection laws
+PCI DSS if payment data handled
+Regular security audits
+Incident response plan
+
+8.5 Usability Requirements
+NFR-USE-01: User Interface:
+
+Responsive design (desktop, tablet, mobile)
+WCAG 2.1 AA accessibility compliance
+Serbian language support
+Intuitive navigation
+Consistent design patterns
+
+NFR-USE-02: User Experience:
+
+Maximum 3 clicks to common actions
+Context-sensitive help
+Keyboard shortcuts for power users
+Customizable workspace
+Remember user preferences
+
+NFR-USE-03: Training and Documentation:
+
+Built-in tutorials
+Contextual help tooltips
+Video guides
+User manual
+Admin guide
+
+8.6 Maintainability Requirements
+NFR-MAINT-01: Code Quality:
+
+Modular architecture
+Comprehensive documentation
+Code coverage >80%
+Automated testing suite
+Coding standards enforcement
+
+NFR-MAINT-02: Deployment:
+
+CI/CD pipeline
+Blue-green deployments
+Rollback capabilities
+Configuration management
+Environment parity
+
+NFR-MAINT-03: Monitoring:
+
+Application performance monitoring
+Error tracking and alerting
+User behavior analytics
+System health dashboards
+Capacity planning metrics
+
+8.7 Compatibility Requirements
+NFR-COMPAT-01: Browser Support:
+
+Chrome (latest 2 versions)
+Firefox (latest 2 versions)
+Edge (latest 2 versions)
+Safari (latest 2 versions)
+
+NFR-COMPAT-02: Platform Support:
+
+Windows 10/11
+macOS (latest 2 versions)
+Ubuntu Linux 20.04+
+Mobile responsive (iOS/Android)
+
+NFR-COMPAT-03: Integration Standards:
+
+RESTful API design
+JSON data format
+OAuth 2.0/SAML 2.0
+Webhook support
+OpenAPI documentation
+
+
+9. Implementation Strategy
+9.1 Phased Approach
+Phase 1: Foundation (Months 1-3)
+Target: Demo ready by May 13, 2025
+Deliverables:
+
+Basic ticket management system
+User authentication (AD integration)
+Simple workflow (New → In Progress → Resolved)
+Email notifications
+Basic reporting
+MVP for demo at training seminar
+
+Key Milestones:
+
+Week 4: Development environment setup
+Week 8: Core ticketing functionality
+Week 10: AD integration complete
+Week 12: Demo preparation
+
+Phase 2: Enhanced Capabilities (Months 3-4)
+Target: Production ready by July 3, 2025
+Deliverables:
+
+Full workflow implementation
+Knowledge base with approval workflow
+SLA management
+Self-service portal
+Advanced reporting and dashboards
+AI categorization and routing
+
+Key Milestones:
+
+Week 14: KB system complete
+Week 15: SLA engine operational
+Week 16: Self-service portal launch
+Week 17: User acceptance testing
+
+Phase 3: AI and Automation (Months 4-6)
+Target: Full capabilities by September 2025
+Deliverables:
+
+AI chatbot deployment
+Advanced analytics
+Predictive insights
+External system integrations
+Mobile application
+Continuous improvement framework
+
+Key Milestones:
+
+Month 5: Chatbot beta testing
+Month 5.5: External integrations
+Month 6: Full production deployment
+
+9.2 Implementation Team Structure
+Core Team:
+
+Project Manager (1)
+Technical Lead (1)
+Backend Developers (3)
+Frontend Developers (2)
+AI/ML Engineer (1)
+QA Engineers (2)
+DevOps Engineer (1)
+Business Analyst (1)
+
+Extended Team:
+
+Security Consultant
+UX Designer
+Technical Writer
+Training Specialist
+
+9.3 Training Plan
+9.3.1 End User Training
+
+Online training modules
+Branch-specific sessions
+Quick reference guides
+Video tutorials
+Sandbox environment
+
+9.3.2 Support Staff Training
+
+Role-based training paths
+Hands-on workshops
+Best practices documentation
+Escalation procedures
+KB article creation
+
+9.3.3 Administrator Training
+
+System configuration
+User management
+Report creation
+Integration management
+Troubleshooting guide
+
+9.4 Change Management
+Communication Strategy:
+
+Executive sponsorship messaging
+Regular stakeholder updates
+User feedback sessions
+Success story sharing
+Resistance management
+
+Adoption Tactics:
+
+Pilot group selection
+Champion identification
+Gamification elements
+Recognition programs
+Continuous improvement
+
+9.5 Testing Strategy
+Test Phases:
+
+Unit Testing (Continuous)
+Integration Testing (Weekly)
+System Testing (Sprint end)
+Performance Testing (Phase end)
+Security Testing (Pre-production)
+User Acceptance Testing (Pre-launch)
+
+Test Scenarios:
+
+Load testing (1000 concurrent users)
+Stress testing (peak scenarios)
+Failover testing
+Integration testing
+Usability testing
+
+
+10. Success Metrics
+10.1 Operational KPIs
+MetricTargetMeasurement FrequencyAverage First Response Time<2 hoursDailyAverage Resolution Time<8 hoursDailyFirst Contact Resolution Rate>70%WeeklyTicket Backlog<100 ticketsDailySLA Compliance>95%DailyEscalation Rate<20%Weekly
+10.2 User Satisfaction KPIs
+MetricTargetMeasurement FrequencyCustomer Satisfaction Score (CSAT)>85%Per ticketSelf-Service Adoption Rate>30%MonthlyKB Article Usefulness>80% helpfulPer articleChatbot Containment Rate>60%WeeklyRepeat Ticket Rate<10%Monthly
+10.3 System Performance KPIs
+MetricTargetMeasurement FrequencySystem Availability>99.8%ContinuousPage Load Time<3 secondsContinuousConcurrent Users Supported>100DailyError Rate<0.1%ContinuousAPI Response Time<500msContinuous
+10.4 Business Value KPIs
+MetricTargetMeasurement FrequencyCost Per TicketReduce 30%QuarterlyAgent ProductivityIncrease 40%MonthlyKnowledge Base Coverage>80% issuesQuarterlyTime to Competency (new agents)Reduce 50%Per hireROI>200% Year 2Annual
+
+11. Risk Management
+11.1 Technical Risks
+RiskImpactProbabilityMitigationAD Integration ComplexityHighMediumEarly POC, fallback authenticationPerformance IssuesHighMediumLoad testing, caching strategyAI Model AccuracyMediumHighContinuous training, manual overrideData Migration ErrorsHighLowPhased migration, rollback plan
+11.2 Operational Risks
+RiskImpactProbabilityMitigationUser Adoption ResistanceHighMediumChange management, trainingVendor Integration DelaysMediumHighEarly engagement, API mockKnowledge Base QualityMediumMediumReview process, guidelinesSupport Staff OverloadHighLowProper sizing, automation
+11.3 Compliance Risks
+RiskImpactProbabilityMitigationData Privacy ViolationsHighLowSecurity audit, encryptionSLA Non-ComplianceMediumMediumAutomated tracking, alertsAudit Trail GapsMediumLowComprehensive loggingAccess Control BreachesHighLowRegular reviews, monitoring
+
+12. Appendices
+Appendix A: Glossary
+
+CCAM: Core Customer Account Management
+ITSM: IT Service Management
+SLA: Service Level Agreement
+CSAT: Customer Satisfaction Score
+FCR: First Contact Resolution
+RBAC: Role-Based Access Control
+SSO: Single Sign-On
+NLP: Natural Language Processing
+ML: Machine Learning
+
+Appendix B: Integration Specifications
+B.1 Active Directory Integration
+json{
+  "connection": {
+    "server": "ldap://pio.gov.rs",
+    "baseDN": "DC=pio,DC=gov,DC=rs",
+    "username": "service_account",
+    "password": "encrypted_password"
+  },
+  "mapping": {
+    "username": "sAMAccountName",
+    "email": "mail",
+    "fullName": "displayName",
+    "department": "department",
+    "groups": "memberOf"
+  }
+}
+B.2 External Vendor API
+json{
+  "endpoint": "https://vendor.api/v1/tickets",
+  "authentication": "OAuth2",
+  "

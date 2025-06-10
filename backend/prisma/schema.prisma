@@ -1,0 +1,801 @@
+// Expanded Prisma schema for PIO Help Desk System
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// User Management Tables
+model Role {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  displayName String   @map("display_name")
+  description String?
+  permissions String   // JSON as string for SQLite
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  // Relations
+  users User[]
+  userAnalytics UserAnalytics[] @relation("RoleAnalytics")
+
+  @@map("roles")
+}
+
+model User {
+  id          String   @id @default(cuid())
+  username    String   @unique
+  email       String   @unique
+  password    String   // Password hash за аутентификацију
+  firstName   String   @map("first_name")
+  lastName    String   @map("last_name")
+  displayName String?  @map("display_name")
+  roleId      String   @map("role_id")
+  department  String?
+  isActive    Boolean  @default(true) @map("is_active")
+  lastLogin   DateTime? @map("last_login")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  role                 Role                  @relation(fields: [roleId], references: [id])
+  createdTickets       Ticket[]              @relation("TicketRequester")
+  assignedTickets      Ticket[]              @relation("TicketAssignee")
+  resolvedTickets      Ticket[]              @relation("TicketResolver")
+  ticketComments       TicketComment[]
+  ticketAttachments    TicketAttachment[]
+  slaEvents            SlaEvent[]
+  // Knowledge Base relations
+  kbArticles           KbArticle[]           @relation("ArticleAuthor")
+  approvedArticles     KbArticle[]           @relation("ArticleApprover")
+  kbFeedback           KbFeedback[]
+  
+  // Analytics relations
+  analyticsAsRequester TicketAnalytics[]     @relation("AnalyticsRequester")
+  analyticsAsAssignee  TicketAnalytics[]     @relation("AnalyticsAssignee")
+  analyticsAsResolver  TicketAnalytics[]     @relation("AnalyticsResolver")
+  userAnalytics        UserAnalytics[]       @relation("UserAnalytics")
+  
+  // Reporting relations
+  reportTemplates      ReportTemplate[]      @relation("ReportTemplateCreator")
+  scheduledReports     ScheduledReport[]     @relation("ScheduledReportCreator")
+  dashboardWidgets     DashboardWidget[]     @relation("DashboardWidgets")
+  
+  // Vendor Integration relations
+  vendorConnections    VendorConnection[]    @relation("creator")
+  vendorSyncErrors     VendorSyncError[]     @relation("resolver")
+
+  @@map("users")
+}
+
+// Category Management
+model Category {
+  id                 String     @id @default(cuid())
+  name               String     // Naziv kategorije (UTF-8)
+  description        String?    // Opis kategorije (UTF-8)
+  parentId           String?    @map("parent_id")
+  slaResponseHours   Int        @default(8) @map("sla_response_hours")
+  slaResolutionHours Int        @default(24) @map("sla_resolution_hours")
+  displayOrder       Int        @default(0) @map("display_order")
+  isActive           Boolean    @default(true) @map("is_active")
+  createdAt          DateTime   @default(now()) @map("created_at")
+
+  // Relations
+  parent           Category?       @relation("CategoryHierarchy", fields: [parentId], references: [id])
+  children         Category[]      @relation("CategoryHierarchy")
+  tickets          Ticket[]
+  slaPolicies      SlaPolicy[]
+  ticketAnalytics  TicketAnalytics[]
+  slaAnalytics     SlaAnalytics[]
+  
+  // Vendor Integration relations
+  vendorCategoryMappings VendorCategoryMapping[]
+
+  @@map("categories")
+}
+
+// Ticket Management
+model Ticket {
+  id             String       @id @default(cuid())
+  ticketNumber   String       @unique @map("ticket_number") // YYYYMMDD-NNNN format
+  title          String       // Naslov tiketa (UTF-8)
+  description    String       // Opis problema (UTF-8)
+  categoryId     String?      @map("category_id")
+  priority       String       @default("medium") // low, medium, high, critical
+  status         String       @default("new") // new, assigned, in_progress, pending_user, etc.
+  requesterId    String       @map("requester_id")
+  assignedTo     String?      @map("assigned_to")
+  resolvedBy     String?      @map("resolved_by")
+  slaDueDate     DateTime?    @map("sla_due_date")
+  slaResponseDue DateTime?    @map("sla_response_due")
+  slaResolutionDue DateTime?  @map("sla_resolution_due")
+  slaStatus      String       @default("on_track") @map("sla_status") // on_track, warning, breached
+  resolutionNotes String?     @map("resolution_notes") // Napomene rešenja (UTF-8)
+  tags           String?      // JSON array as string for SQLite
+  createdAt      DateTime     @default(now()) @map("created_at")
+  updatedAt      DateTime     @updatedAt @map("updated_at")
+  resolvedAt     DateTime?    @map("resolved_at")
+  closedAt       DateTime?    @map("closed_at")
+  firstResponseAt DateTime?   @map("first_response_at")
+
+  // Relations
+  category     Category?           @relation(fields: [categoryId], references: [id])
+  requester    User                @relation("TicketRequester", fields: [requesterId], references: [id])
+  assignee     User?               @relation("TicketAssignee", fields: [assignedTo], references: [id])
+  resolver     User?               @relation("TicketResolver", fields: [resolvedBy], references: [id])
+  comments     TicketComment[]
+  attachments  TicketAttachment[]
+  slaEvents    SlaEvent[]
+  analytics    TicketAnalytics[]
+  slaAnalytics SlaAnalytics[]
+  
+  // Vendor Integration relations
+  vendorMappings VendorTicketMapping[]
+  syncQueue      VendorSyncQueue[]
+  syncErrors     VendorSyncError[]
+
+  @@map("tickets")
+}
+
+model TicketComment {
+  id       String   @id @default(cuid())
+  ticketId String   @map("ticket_id")
+  authorId String   @map("author_id")
+  content  String   // Sadržaj komentara (UTF-8)
+  isPublic Boolean  @default(true) @map("is_public") // Javni ili interno
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // Relations
+  ticket Ticket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  author User   @relation(fields: [authorId], references: [id])
+
+  @@map("ticket_comments")
+}
+
+model TicketAttachment {
+  id           String   @id @default(cuid())
+  ticketId     String   @map("ticket_id")
+  filename     String   // Ime fajla (UTF-8)
+  originalName String   @map("original_name") // Originalno ime (UTF-8)
+  fileSize     Int      @map("file_size")
+  mimeType     String   @map("mime_type")
+  filePath     String   @map("file_path")
+  uploadedBy   String   @map("uploaded_by")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  // Relations
+  ticket   Ticket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  uploader User   @relation(fields: [uploadedBy], references: [id])
+
+  @@map("ticket_attachments")
+}
+
+// SLA Management Models
+model SlaPolicy {
+  id                   String     @id @default(cuid())
+  name                 String     // Naziv SLA politike (UTF-8)
+  description          String?    // Opis politike (UTF-8)
+  categoryId           String?    @map("category_id")
+  priority             String?    // За који приоритет важи
+  responseTimeHours    Int        @map("response_time_hours") // Време одзива у сатима
+  resolutionTimeHours  Int        @map("resolution_time_hours") // Време решавања у сатима
+  escalationLevels     String     @map("escalation_levels") // JSON са нивоима ескалације
+  businessHoursOnly    Boolean    @default(true) @map("business_hours_only")
+  isActive             Boolean    @default(true) @map("is_active")
+  createdAt            DateTime   @default(now()) @map("created_at")
+  updatedAt            DateTime   @updatedAt @map("updated_at")
+
+  // Relations
+  category    Category?     @relation(fields: [categoryId], references: [id])
+  slaEvents   SlaEvent[]
+  slaAnalytics SlaAnalytics[]
+
+  @@map("sla_policies")
+}
+
+model BusinessHours {
+  id          String   @id @default(cuid())
+  dayOfWeek   Int      @map("day_of_week") // 0=Недеља, 1=Понедељак...6=Субота
+  startTime   String   @map("start_time")  // HH:MM формат
+  endTime     String   @map("end_time")    // HH:MM формат
+  isWorkingDay Boolean @default(true) @map("is_working_day")
+  timeZone    String   @default("Europe/Belgrade") @map("time_zone")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@map("business_hours")
+}
+
+model Holiday {
+  id          String   @id @default(cuid())
+  name        String   // Назив празника (UTF-8)
+  date        DateTime // Датум празника
+  isRecurring Boolean  @default(false) @map("is_recurring") // Да ли се понавља сваке године
+  description String?  // Опис празника (UTF-8)
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@map("holidays")
+}
+
+model SlaEvent {
+  id           String     @id @default(cuid())
+  ticketId     String     @map("ticket_id")
+  slaPolicyId  String?    @map("sla_policy_id")
+  eventType    String     @map("event_type") // response_due, resolution_due, warning, breach, escalation
+  status       String     // pending, triggered, resolved
+  dueDate      DateTime   @map("due_date")
+  triggeredAt  DateTime?  @map("triggered_at")
+  resolvedAt   DateTime?  @map("resolved_at")
+  escalatedTo  String?    @map("escalated_to") // User ID кому је ескалирано
+  message      String?    // Порука на српском
+  metadata     String?    // JSON са додатним подацима
+  createdAt    DateTime   @default(now()) @map("created_at")
+
+  // Relations
+  ticket     Ticket     @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  slaPolicy  SlaPolicy? @relation(fields: [slaPolicyId], references: [id])
+  escalatedToUser User?  @relation(fields: [escalatedTo], references: [id])
+
+  @@map("sla_events")
+}
+
+// Knowledge Base System
+model KbCategory {
+  id           String      @id @default(cuid())
+  name         String      // Naziv kategorije (UTF-8)
+  description  String?     // Opis kategorije (UTF-8)
+  parentId     String?     @map("parent_id")
+  displayOrder Int         @default(0) @map("display_order")
+  icon         String?     // Material icon naziv
+  isActive     Boolean     @default(true) @map("is_active")
+  createdAt    DateTime    @default(now()) @map("created_at")
+
+  // Relations
+  parent   KbCategory?  @relation("KbCategoryHierarchy", fields: [parentId], references: [id])
+  children KbCategory[] @relation("KbCategoryHierarchy")
+  articles KbArticle[]
+
+  @@map("kb_categories")
+}
+
+model KbArticle {
+  id             String    @id @default(cuid())
+  title          String    // Naslov članka (UTF-8)
+  content        String    // Sadržaj članka (UTF-8)
+  summary        String?   // Kratak opis (UTF-8)
+  categoryId     String?   @map("category_id")
+  authorId       String    @map("author_id")
+  status         String    @default("draft") // draft, review, published, archived, rejected
+  viewCount      Int       @default(0) @map("view_count")
+  helpfulCount   Int       @default(0) @map("helpful_count")
+  notHelpfulCount Int      @default(0) @map("not_helpful_count")
+  tags           String?   // JSON array as string for SQLite
+  metaKeywords   String?   @map("meta_keywords") // SEO ključne reči
+  approvedBy     String?   @map("approved_by")
+  approvedAt     DateTime? @map("approved_at")
+  publishedAt    DateTime? @map("published_at")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  category  KbCategory?  @relation(fields: [categoryId], references: [id])
+  author    User         @relation("ArticleAuthor", fields: [authorId], references: [id])
+  approver  User?        @relation("ArticleApprover", fields: [approvedBy], references: [id])
+  feedback  KbFeedback[]
+
+  @@map("kb_articles")
+}
+
+model KbFeedback {
+  id        String   @id @default(cuid())
+  articleId String   @map("article_id")
+  userId    String   @map("user_id")
+  isHelpful Boolean  @map("is_helpful") // true = helpful, false = not helpful
+  comment   String?  // Komentar korisnika (UTF-8)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // Relations
+  article KbArticle @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  user    User      @relation(fields: [userId], references: [id])
+
+  @@unique([articleId, userId])
+  @@map("kb_feedback")
+}
+
+// Analytics and Reporting Data Warehouse Tables
+model TicketAnalytics {
+  id                    String   @id @default(cuid())
+  ticketId              String   @map("ticket_id")
+  categoryId            String?  @map("category_id")
+  priority              String
+  status                String
+  requesterId           String   @map("requester_id")
+  assigneeId            String?  @map("assignee_id")
+  resolverId            String?  @map("resolver_id")
+  createdAt             DateTime @map("created_at")
+  firstResponseTime     Int?     @map("first_response_time_minutes") // Minutes to first response
+  resolutionTime        Int?     @map("resolution_time_minutes") // Minutes to resolution
+  totalComments         Int      @default(0) @map("total_comments")
+  totalAttachments      Int      @default(0) @map("total_attachments")
+  slaResponseBreach     Boolean  @default(false) @map("sla_response_breach")
+  slaResolutionBreach   Boolean  @default(false) @map("sla_resolution_breach")
+  escalationCount       Int      @default(0) @map("escalation_count")
+  
+  // Time-based aggregations
+  yearCreated           Int      @map("year_created")
+  monthCreated          Int      @map("month_created")
+  weekCreated           Int      @map("week_created")
+  dayOfWeekCreated      Int      @map("day_of_week_created")
+  hourCreated           Int      @map("hour_created")
+  
+  // Department and location info
+  requesterDepartment   String?  @map("requester_department")
+  assigneeDepartment    String?  @map("assignee_department")
+  
+  updatedAt             DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  ticket    Ticket    @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  category  Category? @relation(fields: [categoryId], references: [id])
+  requester User      @relation("AnalyticsRequester", fields: [requesterId], references: [id])
+  assignee  User?     @relation("AnalyticsAssignee", fields: [assigneeId], references: [id])
+  resolver  User?     @relation("AnalyticsResolver", fields: [resolverId], references: [id])
+
+  @@index([categoryId, yearCreated, monthCreated])
+  @@index([priority, status])
+  @@index([requesterId, createdAt])
+  @@index([assigneeId, createdAt])
+  @@map("ticket_analytics")
+}
+
+model SlaAnalytics {
+  id                      String   @id @default(cuid())
+  ticketId                String   @map("ticket_id")
+  slaPolicyId             String?  @map("sla_policy_id")
+  categoryId              String?  @map("category_id")
+  priority                String
+  responseTimeSla         Int      @map("response_time_sla_minutes") // SLA target in minutes
+  resolutionTimeSla       Int      @map("resolution_time_sla_minutes") // SLA target in minutes
+  actualResponseTime      Int?     @map("actual_response_time_minutes")
+  actualResolutionTime    Int?     @map("actual_resolution_time_minutes")
+  responseTimeCompliance  Boolean? @map("response_time_compliance") // null if not resolved yet
+  resolutionTimeCompliance Boolean? @map("resolution_time_compliance") // null if not resolved yet
+  responseTimeVariance    Int?     @map("response_time_variance_minutes") // negative = early, positive = late
+  resolutionTimeVariance  Int?     @map("resolution_time_variance_minutes")
+  
+  // Time-based aggregations
+  yearCreated             Int      @map("year_created")
+  monthCreated            Int      @map("month_created")
+  weekCreated             Int      @map("week_created")
+  
+  createdAt               DateTime @map("created_at")
+  updatedAt               DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  ticket    Ticket     @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  slaPolicy SlaPolicy? @relation(fields: [slaPolicyId], references: [id])
+  category  Category?  @relation(fields: [categoryId], references: [id])
+
+  @@index([categoryId, yearCreated, monthCreated])
+  @@index([priority, responseTimeCompliance, resolutionTimeCompliance])
+  @@index([slaPolicyId, createdAt])
+  @@map("sla_analytics")
+}
+
+model UserAnalytics {
+  id                        String   @id @default(cuid())
+  userId                    String   @map("user_id")
+  roleId                    String   @map("role_id")
+  department                String?
+  
+  // Performance metrics (calculated for specific time periods)
+  periodType                String   @map("period_type") // daily, weekly, monthly
+  periodYear                Int      @map("period_year")
+  periodMonth               Int?     @map("period_month")
+  periodWeek                Int?     @map("period_week")
+  periodDay                 Int?     @map("period_day")
+  
+  // Ticket metrics
+  ticketsCreated            Int      @default(0) @map("tickets_created")
+  ticketsAssigned           Int      @default(0) @map("tickets_assigned")
+  ticketsResolved           Int      @default(0) @map("tickets_resolved")
+  averageResolutionTime     Int?     @map("avg_resolution_time_minutes")
+  averageFirstResponseTime  Int?     @map("avg_first_response_time_minutes")
+  
+  // SLA metrics
+  slaResponseCompliance     Float?   @map("sla_response_compliance_percentage")
+  slaResolutionCompliance   Float?   @map("sla_resolution_compliance_percentage")
+  
+  // KB metrics
+  kbArticlesCreated         Int      @default(0) @map("kb_articles_created")
+  kbArticlesApproved        Int      @default(0) @map("kb_articles_approved")
+  kbArticleViews            Int      @default(0) @map("kb_article_views")
+  
+  // System usage
+  loginCount                Int      @default(0) @map("login_count")
+  totalSessionTime          Int      @default(0) @map("total_session_time_minutes")
+  
+  createdAt                 DateTime @map("created_at")
+  updatedAt                 DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  user User @relation("UserAnalytics", fields: [userId], references: [id], onDelete: Cascade)
+  role Role @relation("RoleAnalytics", fields: [roleId], references: [id])
+
+  @@index([userId, periodType, periodYear, periodMonth])
+  @@index([roleId, periodType])
+  @@index([department, periodType])
+  @@unique([userId, periodType, periodYear, periodMonth, periodWeek, periodDay])
+  @@map("user_analytics")
+}
+
+model SystemUsageAnalytics {
+  id                    String   @id @default(cuid())
+  
+  // Time period
+  periodType            String   @map("period_type") // hourly, daily, weekly, monthly
+  periodYear            Int      @map("period_year")
+  periodMonth           Int?     @map("period_month")
+  periodWeek            Int?     @map("period_week")
+  periodDay             Int?     @map("period_day")
+  periodHour            Int?     @map("period_hour")
+  
+  // System metrics
+  totalUsers            Int      @default(0) @map("total_users")
+  activeUsers           Int      @default(0) @map("active_users")
+  newUsers              Int      @default(0) @map("new_users")
+  totalSessions         Int      @default(0) @map("total_sessions")
+  averageSessionTime    Int?     @map("avg_session_time_minutes")
+  
+  // Ticket metrics
+  ticketsCreated        Int      @default(0) @map("tickets_created")
+  ticketsResolved       Int      @default(0) @map("tickets_resolved")
+  ticketsPending        Int      @default(0) @map("tickets_pending")
+  
+  // KB metrics
+  kbArticleViews        Int      @default(0) @map("kb_article_views")
+  kbSearchQueries       Int      @default(0) @map("kb_search_queries")
+  
+  // Performance metrics
+  averagePageLoad       Int?     @map("avg_page_load_ms")
+  apiResponseTime       Int?     @map("avg_api_response_time_ms")
+  errorCount            Int      @default(0) @map("error_count")
+  
+  createdAt             DateTime @map("created_at")
+  updatedAt             DateTime @updatedAt @map("updated_at")
+
+  @@index([periodType, periodYear, periodMonth, periodDay])
+  @@unique([periodType, periodYear, periodMonth, periodWeek, periodDay, periodHour])
+  @@map("system_usage_analytics")
+}
+
+model ReportTemplate {
+  id              String    @id @default(cuid())
+  name            String    // Naziv template-a (UTF-8)
+  description     String?   // Opis template-a (UTF-8)
+  category        String    // ticket, sla, user, system
+  templateType    String    @map("template_type") // standard, custom
+  queryDefinition String    @map("query_definition") // JSON with query parameters
+  layoutConfig    String    @map("layout_config") // JSON with layout configuration
+  chartConfig     String?   @map("chart_config") // JSON with chart settings
+  isPublic        Boolean   @default(false) @map("is_public")
+  createdBy       String    @map("created_by")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  creator         User              @relation("ReportTemplateCreator", fields: [createdBy], references: [id])
+  scheduledReports ScheduledReport[]
+
+  @@index([category, templateType])
+  @@index([createdBy])
+  @@map("report_templates")
+}
+
+model ScheduledReport {
+  id               String    @id @default(cuid())
+  templateId       String    @map("template_id")
+  name             String    // Naziv scheduled report-a (UTF-8)
+  schedule         String    // Cron expression
+  recipients       String    // JSON array of email addresses
+  isActive         Boolean   @default(true) @map("is_active")
+  lastExecuted     DateTime? @map("last_executed")
+  nextExecution    DateTime? @map("next_execution")
+  executionCount   Int       @default(0) @map("execution_count")
+  lastStatus       String?   @map("last_status") // success, failed, running
+  lastError        String?   @map("last_error") // Error message in Serbian
+  createdBy        String    @map("created_by")
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  template ReportTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  creator  User           @relation("ScheduledReportCreator", fields: [createdBy], references: [id])
+
+  @@index([isActive, nextExecution])
+  @@index([createdBy])
+  @@map("scheduled_reports")
+}
+
+model DashboardWidget {
+  id               String   @id @default(cuid())
+  userId           String   @map("user_id")
+  widgetType       String   @map("widget_type") // chart, table, metric, text
+  title            String   // Naslov widget-a (UTF-8)
+  position         Int      @default(0) // Position on dashboard
+  size             String   @default("medium") // small, medium, large
+  dataSource       String   @map("data_source") // ticket, sla, user, system
+  configuration    String   // JSON with widget configuration
+  refreshInterval  Int      @default(300) @map("refresh_interval_seconds") // Auto refresh interval
+  isActive         Boolean  @default(true) @map("is_active")
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  user User @relation("DashboardWidgets", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, position])
+  @@index([widgetType, dataSource])
+  @@map("dashboard_widgets")
+}
+
+model AnalyticsMetric {
+  id          String   @id @default(cuid())
+  metricName  String   @map("metric_name") // Unique metric identifier
+  displayName String   @map("display_name") // Display name in Serbian
+  description String?  // Description in Serbian
+  category    String   // ticket, sla, user, system
+  dataType    String   @map("data_type") // integer, float, percentage, duration
+  unit        String?  // Unit of measurement (minutes, hours, percent, etc.)
+  aggregation String   // sum, avg, count, min, max
+  isActive    Boolean  @default(true) @map("is_active")
+  sortOrder   Int      @default(0) @map("sort_order")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@unique([metricName])
+  @@index([category, isActive])
+  @@map("analytics_metrics")
+}
+
+// Vendor Integration Models
+model VendorSystem {
+  id                 String     @id @default(cuid())
+  vendorType         String     @map("vendor_type") // jira, servicenow, zendesk, freshdesk
+  name               String     // Display name (UTF-8)
+  description        String?    // Description (UTF-8)
+  apiBaseUrl         String     @map("api_base_url")
+  authType           String     @map("auth_type") // oauth2, api_key, basic
+  defaultSettings    String?    @map("default_settings") // JSON with vendor-specific settings
+  isActive           Boolean    @default(true) @map("is_active")
+  createdAt          DateTime   @default(now()) @map("created_at")
+  updatedAt          DateTime   @updatedAt @map("updated_at")
+
+  // Relations
+  connections        VendorConnection[]
+  fieldMappings      VendorFieldMapping[]
+  statusMappings     VendorStatusMapping[]
+  priorityMappings   VendorPriorityMapping[]
+  categoryMappings   VendorCategoryMapping[]
+
+  @@map("vendor_systems")
+}
+
+model VendorConnection {
+  id                 String     @id @default(cuid())
+  vendorSystemId     String     @map("vendor_system_id")
+  name               String     // Connection name (UTF-8)
+  description        String?    // Description (UTF-8)
+  clientId           String?    @map("client_id") // OAuth client ID
+  encryptedToken     String?    @map("encrypted_token") // Encrypted access token
+  refreshToken       String?    @map("refresh_token") // OAuth refresh token
+  tokenExpiresAt     DateTime?  @map("token_expires_at")
+  additionalConfig   String?    @map("additional_config") // JSON with vendor-specific config
+  connectionStatus   String     @default("disconnected") @map("connection_status") // active, failed, disconnected
+  lastConnectedAt    DateTime?  @map("last_connected_at")
+  createdBy          String     @map("created_by")
+  isActive           Boolean    @default(true) @map("is_active")
+  createdAt          DateTime   @default(now()) @map("created_at")
+  updatedAt          DateTime   @updatedAt @map("updated_at")
+
+  // Relations
+  vendorSystem       VendorSystem           @relation(fields: [vendorSystemId], references: [id])
+  creator            User                   @relation("creator", fields: [createdBy], references: [id])
+  ticketMappings     VendorTicketMapping[]
+  syncQueue          VendorSyncQueue[]
+  syncHistory        VendorSyncHistory[]
+  webhooks           VendorWebhook[]
+  syncErrors         VendorSyncError[]
+
+  @@map("vendor_connections")
+}
+
+model VendorFieldMapping {
+  id                 String     @id @default(cuid())
+  vendorSystemId     String     @map("vendor_system_id")
+  entityType         String     @map("entity_type") // ticket, comment, user, etc.
+  internalField      String     @map("internal_field") // Our field name
+  vendorField        String     @map("vendor_field") // Vendor's field name
+  fieldType          String     @map("field_type") // string, number, date, boolean, etc.
+  transformationType String?    @map("transformation_type") // none, date_format, custom
+  transformationConfig String?   @map("transformation_config") // JSON with transformation rules
+  isRequired         Boolean    @default(false) @map("is_required")
+  defaultValue       String?    @map("default_value")
+  direction          String     @default("bidirectional") // inbound, outbound, bidirectional
+  isActive           Boolean    @default(true) @map("is_active")
+  createdAt          DateTime   @default(now()) @map("created_at")
+  updatedAt          DateTime   @updatedAt @map("updated_at")
+
+  // Relations
+  vendorSystem       VendorSystem @relation(fields: [vendorSystemId], references: [id])
+
+  @@index([vendorSystemId, entityType])
+  @@map("vendor_field_mappings")
+}
+
+model VendorStatusMapping {
+  id                 String     @id @default(cuid())
+  vendorSystemId     String     @map("vendor_system_id")
+  internalStatus     String     @map("internal_status") // Our status
+  vendorStatus       String     @map("vendor_status") // Vendor's status
+  statusDescription  String?    @map("status_description") // Description in Serbian
+  isActive           Boolean    @default(true) @map("is_active")
+  createdAt          DateTime   @default(now()) @map("created_at")
+
+  // Relations
+  vendorSystem       VendorSystem @relation(fields: [vendorSystemId], references: [id])
+
+  @@unique([vendorSystemId, internalStatus])
+  @@map("vendor_status_mappings")
+}
+
+model VendorPriorityMapping {
+  id                 String     @id @default(cuid())
+  vendorSystemId     String     @map("vendor_system_id")
+  internalPriority   String     @map("internal_priority") // Our priority
+  vendorPriority     String     @map("vendor_priority") // Vendor's priority
+  priorityDescription String?   @map("priority_description") // Description in Serbian
+  isActive           Boolean    @default(true) @map("is_active")
+  createdAt          DateTime   @default(now()) @map("created_at")
+
+  // Relations
+  vendorSystem       VendorSystem @relation(fields: [vendorSystemId], references: [id])
+
+  @@unique([vendorSystemId, internalPriority])
+  @@map("vendor_priority_mappings")
+}
+
+model VendorCategoryMapping {
+  id                 String     @id @default(cuid())
+  vendorSystemId     String     @map("vendor_system_id")
+  internalCategoryId String     @map("internal_category_id")
+  vendorCategory     String     @map("vendor_category") // Vendor's category value
+  categoryDescription String?   @map("category_description") // Description in Serbian
+  isActive           Boolean    @default(true) @map("is_active")
+  createdAt          DateTime   @default(now()) @map("created_at")
+
+  // Relations
+  vendorSystem       VendorSystem @relation(fields: [vendorSystemId], references: [id])
+  category           Category     @relation(fields: [internalCategoryId], references: [id])
+
+  @@unique([vendorSystemId, internalCategoryId])
+  @@map("vendor_category_mappings")
+}
+
+model VendorTicketMapping {
+  id                 String     @id @default(cuid())
+  connectionId       String     @map("connection_id")
+  internalTicketId   String     @map("internal_ticket_id")
+  vendorTicketId     String     @map("vendor_ticket_id") // Vendor's ticket ID
+  vendorTicketKey    String?    @map("vendor_ticket_key") // Vendor's ticket key (e.g., JIRA-123)
+  lastSyncAt         DateTime?  @map("last_sync_at")
+  lastSyncDirection  String?    @map("last_sync_direction") // inbound, outbound
+  syncStatus         String     @default("active") @map("sync_status") // active, suspended, error
+  vendorData         String?    @map("vendor_data") // JSON with last known vendor data
+  createdAt          DateTime   @default(now()) @map("created_at")
+  updatedAt          DateTime   @updatedAt @map("updated_at")
+
+  // Relations
+  connection         VendorConnection @relation(fields: [connectionId], references: [id])
+  ticket             Ticket           @relation(fields: [internalTicketId], references: [id])
+
+  @@unique([connectionId, internalTicketId])
+  @@unique([connectionId, vendorTicketId])
+  @@index([syncStatus, lastSyncAt])
+  @@map("vendor_ticket_mappings")
+}
+
+model VendorSyncQueue {
+  id                 String     @id @default(cuid())
+  connectionId       String     @map("connection_id")
+  ticketId           String?    @map("ticket_id")
+  vendorTicketId     String?    @map("vendor_ticket_id")
+  operationType      String     @map("operation_type") // create, update, delete, comment_add
+  direction          String     // inbound, outbound
+  priority           Int        @default(5) // 1-10, higher is more urgent
+  payload            String     // JSON with data to sync
+  status             String     @default("pending") // pending, processing, completed, failed
+  retryCount         Int        @default(0) @map("retry_count")
+  nextRetryAt        DateTime?  @map("next_retry_at")
+  errorMessage       String?    @map("error_message") // Error in Serbian
+  processedAt        DateTime?  @map("processed_at")
+  createdAt          DateTime   @default(now()) @map("created_at")
+
+  // Relations
+  connection         VendorConnection @relation(fields: [connectionId], references: [id])
+  ticket             Ticket?          @relation(fields: [ticketId], references: [id])
+
+  @@index([status, priority, createdAt])
+  @@index([connectionId, status])
+  @@map("vendor_sync_queue")
+}
+
+model VendorSyncHistory {
+  id                 String     @id @default(cuid())
+  connectionId       String     @map("connection_id")
+  syncType           String     @map("sync_type") // full, incremental, single_ticket
+  syncDirection      String     @map("sync_direction") // inbound, outbound, bidirectional
+  startedAt          DateTime   @map("started_at")
+  completedAt        DateTime?  @map("completed_at")
+  status             String     // running, completed, failed
+  totalRecords       Int        @default(0) @map("total_records")
+  successfulRecords  Int        @default(0) @map("successful_records")
+  failedRecords      Int        @default(0) @map("failed_records")
+  errorSummary       String?    @map("error_summary") // Summary in Serbian
+  syncDetails        String?    @map("sync_details") // JSON with detailed results
+  createdAt          DateTime   @default(now()) @map("created_at")
+
+  // Relations
+  connection         VendorConnection @relation(fields: [connectionId], references: [id])
+
+  @@index([connectionId, status])
+  @@index([startedAt])
+  @@map("vendor_sync_history")
+}
+
+model VendorWebhook {
+  id                 String     @id @default(cuid())
+  connectionId       String     @map("connection_id")
+  webhookUrl         String     @map("webhook_url") // Our webhook endpoint
+  vendorWebhookId    String?    @map("vendor_webhook_id") // ID on vendor side
+  events             String     // JSON array of subscribed events
+  secret             String?    // Webhook secret for verification
+  isActive           Boolean    @default(true) @map("is_active")
+  lastTriggeredAt    DateTime?  @map("last_triggered_at")
+  failureCount       Int        @default(0) @map("failure_count")
+  createdAt          DateTime   @default(now()) @map("created_at")
+  updatedAt          DateTime   @updatedAt @map("updated_at")
+
+  // Relations
+  connection         VendorConnection @relation(fields: [connectionId], references: [id])
+
+  @@index([connectionId, isActive])
+  @@map("vendor_webhooks")
+}
+
+model VendorSyncError {
+  id                 String     @id @default(cuid())
+  connectionId       String     @map("connection_id")
+  ticketId           String?    @map("ticket_id")
+  vendorTicketId     String?    @map("vendor_ticket_id")
+  errorType          String     @map("error_type") // auth_failed, mapping_error, api_error, etc.
+  errorMessage       String     @map("error_message") // Error message in Serbian
+  errorDetails       String?    @map("error_details") // JSON with full error details
+  occurredAt         DateTime   @map("occurred_at")
+  isResolved         Boolean    @default(false) @map("is_resolved")
+  resolvedAt         DateTime?  @map("resolved_at")
+  resolvedBy         String?    @map("resolved_by")
+  resolution         String?    // Resolution notes in Serbian
+  createdAt          DateTime   @default(now()) @map("created_at")
+
+  // Relations
+  connection         VendorConnection @relation(fields: [connectionId], references: [id])
+  ticket             Ticket?          @relation(fields: [ticketId], references: [id])
+  resolver           User?            @relation("resolver", fields: [resolvedBy], references: [id])
+
+  @@index([connectionId, errorType, isResolved])
+  @@index([occurredAt])
+  @@map("vendor_sync_errors")
+} 

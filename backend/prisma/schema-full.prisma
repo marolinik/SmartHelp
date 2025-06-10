@@ -1,0 +1,353 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// Enums for consistent data types
+enum Priority {
+  low
+  medium
+  high
+  critical
+}
+
+enum TicketStatus {
+  new
+  assigned
+  in_progress
+  pending_user
+  pending_vendor
+  resolved
+  closed
+  on_hold
+  cancelled
+}
+
+enum ArticleStatus {
+  draft
+  review
+  published
+  archived
+  rejected
+}
+
+enum NotificationType {
+  email
+  sms
+  push
+  in_app
+}
+
+enum DeliveryStatus {
+  pending
+  sent
+  failed
+  delivered
+}
+
+// User Management Tables
+model Role {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  displayName String   @map("display_name") // Naziv uloge na srpskom
+  description String?  // Opis uloge na srpskom
+  permissions Json     // Array permisija
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  // Relations
+  users User[]
+
+  @@map("roles")
+}
+
+model User {
+  id          String   @id @default(cuid())
+  username    String   @unique
+  email       String   @unique
+  firstName   String   @map("first_name") // Ime (UTF-8)
+  lastName    String   @map("last_name") // Prezime (UTF-8)
+  displayName String?  @map("display_name") // Puno ime za prikaz
+  roleId      String   @map("role_id")
+  department  String?  // Odeljenje (UTF-8)
+  isActive    Boolean  @default(true) @map("is_active")
+  lastLogin   DateTime? @map("last_login")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  role                 Role                  @relation(fields: [roleId], references: [id])
+  createdTickets       Ticket[]              @relation("TicketRequester")
+  assignedTickets      Ticket[]              @relation("TicketAssignee")
+  resolvedTickets      Ticket[]              @relation("TicketResolver")
+  ticketComments       TicketComment[]
+  ticketAttachments    TicketAttachment[]
+  kbArticles           KbArticle[]           @relation("ArticleAuthor")
+  approvedArticles     KbArticle[]           @relation("ArticleApprover")
+  kbFeedback           KbFeedback[]
+  notifications        NotificationLog[]
+  sentNotifications    NotificationLog[]     @relation("NotificationSender")
+
+  @@map("users")
+}
+
+// Category Management
+model Category {
+  id                 String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name               String     @db.VarChar(100) // Naziv kategorije (UTF-8)
+  description        String?    @db.Text // Opis kategorije (UTF-8)
+  parentId           String?    @map("parent_id") @db.Uuid
+  slaResponseHours   Int        @default(8) @map("sla_response_hours")
+  slaResolutionHours Int        @default(24) @map("sla_resolution_hours")
+  aiKeywords         String[]   @map("ai_keywords") @db.Text // Ključne reči za AI kategorizaciju
+  displayOrder       Int        @default(0) @map("display_order")
+  isActive           Boolean    @default(true) @map("is_active")
+  createdAt          DateTime   @default(now()) @map("created_at")
+
+  // Relations
+  parent           Category?    @relation("CategoryHierarchy", fields: [parentId], references: [id])
+  children         Category[]   @relation("CategoryHierarchy")
+  tickets          Ticket[]
+  slaPolicy        SlaPolicy[]
+
+  @@map("categories")
+}
+
+// Ticket Management
+model Ticket {
+  id             String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  ticketNumber   String       @unique @map("ticket_number") @db.VarChar(20) // YYYYMMDD-NNNN format
+  title          String       @db.VarChar(255) // Naslov tiketa (UTF-8)
+  description    String       @db.Text // Opis problema (UTF-8)
+  categoryId     String?      @map("category_id") @db.Uuid
+  priority       Priority     @default(medium)
+  status         TicketStatus @default(new)
+  requesterId    String       @map("requester_id") @db.Uuid
+  assignedTo     String?      @map("assigned_to") @db.Uuid
+  resolvedBy     String?      @map("resolved_by") @db.Uuid
+  slaDueDate     DateTime?    @map("sla_due_date")
+  resolutionNotes String?     @map("resolution_notes") @db.Text // Napomene rešenja (UTF-8)
+  tags           String[]     @db.Text
+  createdAt      DateTime     @default(now()) @map("created_at")
+  updatedAt      DateTime     @updatedAt @map("updated_at")
+  resolvedAt     DateTime?    @map("resolved_at")
+  closedAt       DateTime?    @map("closed_at")
+
+  // Relations
+  category     Category?           @relation(fields: [categoryId], references: [id])
+  requester    User                @relation("TicketRequester", fields: [requesterId], references: [id])
+  assignee     User?               @relation("TicketAssignee", fields: [assignedTo], references: [id])
+  resolver     User?               @relation("TicketResolver", fields: [resolvedBy], references: [id])
+  comments     TicketComment[]
+  attachments  TicketAttachment[]
+  slaTracking  SlaTracking[]
+
+  @@map("tickets")
+}
+
+model TicketComment {
+  id       String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  ticketId String   @map("ticket_id") @db.Uuid
+  authorId String   @map("author_id") @db.Uuid
+  content  String   @db.Text // Sadržaj komentara (UTF-8)
+  isPublic Boolean  @default(true) @map("is_public") // Javni ili interno
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // Relations
+  ticket Ticket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  author User   @relation(fields: [authorId], references: [id])
+
+  @@map("ticket_comments")
+}
+
+model TicketAttachment {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  ticketId     String   @map("ticket_id") @db.Uuid
+  filename     String   @db.VarChar(255) // Ime fajla (UTF-8)
+  originalName String   @map("original_name") @db.VarChar(255) // Originalno ime (UTF-8)
+  fileSize     Int      @map("file_size")
+  mimeType     String   @map("mime_type") @db.VarChar(100)
+  filePath     String   @map("file_path") @db.VarChar(500)
+  uploadedBy   String   @map("uploaded_by") @db.Uuid
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  // Relations
+  ticket   Ticket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  uploader User   @relation(fields: [uploadedBy], references: [id])
+
+  @@map("ticket_attachments")
+}
+
+// Knowledge Base
+model KbCategory {
+  id           String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name         String      @db.VarChar(100) // Naziv kategorije (UTF-8)
+  description  String?     @db.Text // Opis kategorije (UTF-8)
+  parentId     String?     @map("parent_id") @db.Uuid
+  displayOrder Int         @default(0) @map("display_order")
+  icon         String?     @db.VarChar(50) // Material icon naziv
+  isActive     Boolean     @default(true) @map("is_active")
+  createdAt    DateTime    @default(now()) @map("created_at")
+
+  // Relations
+  parent   KbCategory?  @relation("KbCategoryHierarchy", fields: [parentId], references: [id])
+  children KbCategory[] @relation("KbCategoryHierarchy")
+  articles KbArticle[]
+
+  @@map("kb_categories")
+}
+
+model KbArticle {
+  id             String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  title          String        @db.VarChar(255) // Naslov članka (UTF-8)
+  content        String        @db.Text // Sadržaj članka (UTF-8)
+  summary        String?       @db.Text // Kratak opis (UTF-8)
+  categoryId     String?       @map("category_id") @db.Uuid
+  authorId       String        @map("author_id") @db.Uuid
+  status         ArticleStatus @default(draft)
+  viewCount      Int           @default(0) @map("view_count")
+  helpfulCount   Int           @default(0) @map("helpful_count")
+  notHelpfulCount Int          @default(0) @map("not_helpful_count")
+  tags           String[]      @db.Text // Tagovi za pretragu
+  metaKeywords   String?       @map("meta_keywords") @db.Text // SEO ključne reči
+  approvedBy     String?       @map("approved_by") @db.Uuid
+  approvedAt     DateTime?     @map("approved_at")
+  publishedAt    DateTime?     @map("published_at")
+  createdAt      DateTime      @default(now()) @map("created_at")
+  updatedAt      DateTime      @updatedAt @map("updated_at")
+
+  // Relations
+  category  KbCategory?  @relation(fields: [categoryId], references: [id])
+  author    User         @relation("ArticleAuthor", fields: [authorId], references: [id])
+  approver  User?        @relation("ArticleApprover", fields: [approvedBy], references: [id])
+  feedback  KbFeedback[]
+
+  @@map("kb_articles")
+}
+
+model KbFeedback {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  articleId String   @map("article_id") @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  isHelpful Boolean  @map("is_helpful") // true = helpful, false = not helpful
+  comment   String?  @db.Text // Komentar korisnika (UTF-8)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // Relations
+  article KbArticle @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  user    User      @relation(fields: [userId], references: [id])
+
+  @@unique([articleId, userId])
+  @@map("kb_feedback")
+}
+
+// SLA Management
+model SlaPolicy {
+  id                   String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name                 String    @db.VarChar(100) // Naziv SLA politike (UTF-8)
+  description          String?   @db.Text // Opis politike (UTF-8)
+  priority             Priority
+  categoryId           String?   @map("category_id") @db.Uuid
+  responseTimeHours    Int       @map("response_time_hours") // Vreme odgovora u satima
+  resolutionTimeHours  Int       @map("resolution_time_hours") // Vreme rešavanja u satima
+  businessHoursOnly    Boolean   @default(true) @map("business_hours_only")
+  escalationRules      Json?     @map("escalation_rules") @db.JsonB // Pravila eskalacije
+  isActive             Boolean   @default(true) @map("is_active")
+  createdAt            DateTime  @default(now()) @map("created_at")
+
+  // Relations
+  category    Category?     @relation(fields: [categoryId], references: [id])
+  slaTracking SlaTracking[]
+
+  @@map("sla_policies")
+}
+
+model SlaTracking {
+  id                   String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  ticketId             String    @map("ticket_id") @db.Uuid
+  policyId             String    @map("policy_id") @db.Uuid
+  responseDueDate      DateTime  @map("response_due_date")
+  resolutionDueDate    DateTime  @map("resolution_due_date")
+  firstResponseAt      DateTime? @map("first_response_at")
+  resolvedAt           DateTime? @map("resolved_at")
+  responseBreached     Boolean   @default(false) @map("response_breached")
+  resolutionBreached   Boolean   @default(false) @map("resolution_breached")
+  breachReason         String?   @map("breach_reason") @db.Text // Razlog kršenja SLA (UTF-8)
+  createdAt            DateTime  @default(now()) @map("created_at")
+
+  // Relations
+  ticket Ticket    @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  policy SlaPolicy @relation(fields: [policyId], references: [id])
+
+  @@unique([ticketId, policyId])
+  @@map("sla_tracking")
+}
+
+// Notification System
+model NotificationTemplate {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name      String   @db.VarChar(100) // Naziv template-a
+  subject   String   @db.VarChar(255) // Naslov (UTF-8)
+  bodyHtml  String   @map("body_html") @db.Text // HTML sadržaj (UTF-8)
+  bodyText  String   @map("body_text") @db.Text // Text sadržaj (UTF-8)
+  variables Json?    @db.JsonB // Dostupne varijable
+  language  String   @default("sr") @db.VarChar(5) // sr, en
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("notification_templates")
+}
+
+model NotificationLog {
+  id           String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  recipientId  String           @map("recipient_id") @db.Uuid
+  senderId     String?          @map("sender_id") @db.Uuid
+  type         NotificationType
+  subject      String?          @db.VarChar(255) // Naslov (UTF-8)
+  content      String?          @db.Text // Sadržaj (UTF-8)
+  status       DeliveryStatus   @default(pending)
+  sentAt       DateTime?        @map("sent_at")
+  errorMessage String?          @map("error_message") @db.Text // Poruka greške (UTF-8)
+  metadata     Json?            @db.JsonB // Dodatni metadata
+  createdAt    DateTime         @default(now()) @map("created_at")
+
+  // Relations
+  recipient User  @relation(fields: [recipientId], references: [id])
+  sender    User? @relation("NotificationSender", fields: [senderId], references: [id])
+
+  @@map("notification_log")
+}
+
+// Audit Trail
+model AuditLog {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId      String?  @map("user_id") @db.Uuid
+  action      String   @db.VarChar(100) // Akcija (UTF-8)
+  entityType  String   @map("entity_type") @db.VarChar(50) // tip entiteta
+  entityId    String   @map("entity_id") @db.Uuid
+  oldValues   Json?    @map("old_values") @db.JsonB
+  newValues   Json?    @map("new_values") @db.JsonB
+  ipAddress   String?  @map("ip_address") @db.VarChar(45)
+  userAgent   String?  @map("user_agent") @db.Text
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@map("audit_log")
+}
+
+// System Configuration
+model SystemConfig {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  key       String   @unique @db.VarChar(100)
+  value     String   @db.Text
+  description String? @db.Text // Opis konfiguracije (UTF-8)
+  isPublic  Boolean  @default(false) @map("is_public") // Da li je dostupno frontend-u
+  updatedAt DateTime @updatedAt @map("updated_at")
+  updatedBy String?  @map("updated_by") @db.Uuid
+
+  @@map("system_config")
+} 
